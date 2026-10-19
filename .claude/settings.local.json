@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(git --version)",
+      "Bash(git ls-remote *)"
+    ]
+  }
+}
