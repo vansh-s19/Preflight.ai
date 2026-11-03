@@ -25,7 +25,7 @@
   --tint-lilac: #eeeafa;
   --tint-mint: #e3f4ea;
 
-  --display: "Bricolage Grotesque", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
   --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
@@ -105,8 +105,8 @@ code { font-family: var(--mono); font-size: 0.86em; }
   border-bottom: 1px solid rgb(229 231 235 / 0.7);
 }
 .nav-inner { display: flex; align-items: center; gap: 24px; height: 64px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 700; font-size: 19px; text-decoration: none; letter-spacing: -0.02em; }
-.brand-mark { width: 30px; height: 30px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; text-decoration: none; letter-spacing: -0.01em; }
+.brand-mark { width: 32px; height: 32px; filter: drop-shadow(0 2px 4px rgb(251 1 2 / 0.25)); }
 .nav-links { display: flex; gap: 28px; margin-left: auto; }
 .nav-links a { color: var(--ink-soft); text-decoration: none; font-size: 14px; font-weight: 500; }
 .nav-links a:hover { color: var(--ink); }
@@ -141,10 +141,11 @@ code { font-family: var(--mono); font-size: 0.86em; }
 h1 {
   margin-top: 22px;
   font-family: var(--display);
-  font-weight: 700;
-  font-size: clamp(44px, 5.8vw, 76px);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
+  font-weight: 350;
+  font-variation-settings: "opsz" 144;
+  font-size: clamp(48px, 6.2vw, 82px);
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
 .steps-inline {
@@ -309,9 +310,10 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
   margin-inline: auto;
   text-align: center;
   font-family: var(--display);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 350;
+  font-variation-settings: "opsz" 72;
+  letter-spacing: -0.015em;
+  font-size: clamp(25px, 3.1vw, 36px);
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -338,12 +340,13 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 .section-head { max-width: 620px; margin: 0 auto 52px; text-align: center; }
 .section-head h2 {
   font-family: var(--display);
-  font-weight: 700;
-  font-size: clamp(34px, 4.2vw, 50px);
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+  font-weight: 350;
+  font-variation-settings: "opsz" 144;
+  font-size: clamp(38px, 4.6vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
 }
-.section-head h2 em { color: var(--green); font-style: normal; }
+.section-head h2 em { color: var(--green); font-style: italic; }
 .section-head p { margin-top: 14px; color: var(--muted); font-size: 17px; }
 
 /* How it works */
@@ -471,7 +474,7 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
   box-shadow: var(--shadow);
 }
 .plan-team { background: linear-gradient(180deg, #f6f9ff, #fff 40%); }
-.plan-top h3 { margin-top: 16px; font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1.1; letter-spacing: -0.03em; }
+.plan-top h3 { margin-top: 16px; font-family: var(--display); font-weight: 350; font-variation-settings: "opsz" 144; font-size: 34px; line-height: 1.1; letter-spacing: -0.02em; }
 .plan-price { margin-top: 8px; color: var(--muted); }
 .plan-price strong { color: var(--ink); font-size: 22px; margin-right: 4px; }
 .plan-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; flex: 1; }
@@ -520,8 +523,9 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
     linear-gradient(180deg, var(--bg) 0%, #dfeaf6 100%);
 }
 .final-inner { display: grid; justify-items: center; gap: 18px; text-align: center; }
+.final-logo { width: 76px; height: 76px; margin-bottom: 6px; filter: drop-shadow(0 12px 24px rgb(251 1 2 / 0.28)); }
 .final-kicker { color: var(--muted); font-size: 14px; font-weight: 500; }
-.final h2 { font-family: var(--display); font-weight: 700; font-size: clamp(40px, 5.6vw, 66px); line-height: 1.02; letter-spacing: -0.04em; }
+.final h2 { font-family: var(--display); font-weight: 350; font-variation-settings: "opsz" 144; font-size: clamp(44px, 6vw, 72px); line-height: 1; letter-spacing: -0.03em; }
 .final-inner > p:not(.final-kicker) { color: var(--ink-soft); font-size: 17px; max-width: 460px; }
 .final .btn { margin-top: 10px; }
 
