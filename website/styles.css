@@ -25,7 +25,7 @@
   --tint-lilac: #eeeafa;
   --tint-mint: #e3f4ea;
 
-  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --display: "Libertinus Serif", Georgia, "Times New Roman", serif;
   --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
@@ -141,11 +141,10 @@ code { font-family: var(--mono); font-size: 0.86em; }
 h1 {
   margin-top: 22px;
   font-family: var(--display);
-  font-weight: 350;
-  font-variation-settings: "opsz" 144;
-  font-size: clamp(48px, 6.2vw, 82px);
+  font-weight: 400;
+  font-size: clamp(48px, 6vw, 80px);
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
 }
 
 .steps-inline {
@@ -310,10 +309,9 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
   margin-inline: auto;
   text-align: center;
   font-family: var(--display);
-  font-weight: 350;
-  font-variation-settings: "opsz" 72;
-  letter-spacing: -0.015em;
-  font-size: clamp(25px, 3.1vw, 36px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  font-size: clamp(26px, 3.2vw, 38px);
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -337,14 +335,14 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 /* ---------- Sections ---------- */
 .section { padding: 96px 0; }
 .section-soft { background: var(--soft); }
-.section-head { max-width: 620px; margin: 0 auto 52px; text-align: center; }
+.section-head { max-width: 780px; margin: 0 auto 52px; text-align: center; }
+.section-head p { max-width: 620px; margin-inline: auto; }
 .section-head h2 {
   font-family: var(--display);
-  font-weight: 350;
-  font-variation-settings: "opsz" 144;
+  font-weight: 400;
   font-size: clamp(38px, 4.6vw, 56px);
   line-height: 1.05;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.035em;
 }
 .section-head h2 em { color: var(--green); font-style: italic; }
 .section-head p { margin-top: 14px; color: var(--muted); font-size: 17px; }
@@ -474,7 +472,7 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
   box-shadow: var(--shadow);
 }
 .plan-team { background: linear-gradient(180deg, #f6f9ff, #fff 40%); }
-.plan-top h3 { margin-top: 16px; font-family: var(--display); font-weight: 350; font-variation-settings: "opsz" 144; font-size: 34px; line-height: 1.1; letter-spacing: -0.02em; }
+.plan-top h3 { margin-top: 16px; font-family: var(--display); font-weight: 400; font-size: 36px; line-height: 1.1; letter-spacing: -0.03em; }
 .plan-price { margin-top: 8px; color: var(--muted); }
 .plan-price strong { color: var(--ink); font-size: 22px; margin-right: 4px; }
 .plan-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; flex: 1; }
@@ -525,7 +523,7 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 .final-inner { display: grid; justify-items: center; gap: 18px; text-align: center; }
 .final-logo { width: 76px; height: 76px; margin-bottom: 6px; filter: drop-shadow(0 12px 24px rgb(251 1 2 / 0.28)); }
 .final-kicker { color: var(--muted); font-size: 14px; font-weight: 500; }
-.final h2 { font-family: var(--display); font-weight: 350; font-variation-settings: "opsz" 144; font-size: clamp(44px, 6vw, 72px); line-height: 1; letter-spacing: -0.03em; }
+.final h2 { font-family: var(--display); font-weight: 400; font-size: clamp(44px, 6vw, 72px); line-height: 1; letter-spacing: -0.04em; }
 .final-inner > p:not(.final-kicker) { color: var(--ink-soft); font-size: 17px; max-width: 460px; }
 .final .btn { margin-top: 10px; }
 
