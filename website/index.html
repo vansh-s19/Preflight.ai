@@ -35,6 +35,9 @@
     <symbol id="i-device" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4.25 4.25 0 0 1-.5 8.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="m20 11-8.5 8.5a5 5 0 0 1-7-7L13 4a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4L14.5 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
   </svg>
 
@@ -62,10 +65,6 @@
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <p class="pill">
-            <svg aria-hidden="true"><use href="#i-shield" /></svg>
-            Free Chrome extension · Works on ChatGPT and Claude
-          </p>
           <h1>Catch leaks before you hit&nbsp;send.</h1>
           <ol class="steps-inline" aria-label="What Preflight does">
             <li><span class="dot dot-blue"><svg aria-hidden="true"><use href="#i-search" /></svg></span>Spots sensitive data</li>
@@ -159,52 +158,85 @@
           <p>Nothing new to learn. Keep using AI the way you already do.</p>
         </div>
 
+        <!-- Each visual loops a short clip of its step, driven by how.js. The
+             markup is the static frame shown without JS / with reduced motion. -->
         <div class="how-grid">
           <article class="how-card">
-            <div class="how-visual tint-sky">
-              <div class="mini-window">
-                <div class="mini-bubble">Summarise this contract for me… <span class="caret" aria-hidden="true"></span></div>
-                <div class="mini-attach"><svg aria-hidden="true"><use href="#i-file" /></svg>vendor_agreement.pdf</div>
+            <div class="how-visual tint-sky" data-how="type" aria-hidden="true">
+              <div class="mini-window mini-composer">
+                <p class="mini-input" data-how-text>Summarise this contract for me</p>
+                <div class="mini-file is-done" data-how-file>
+                  <span class="mini-file-badge">PDF</span>
+                  <span class="mini-file-meta">
+                    <b>vendor_agreement.pdf</b>
+                    <span class="mini-progress"><i data-how-progress style="width:100%"></i></span>
+                    <span class="mini-file-size">1.2 MB</span>
+                  </span>
+                </div>
+                <div class="mini-toolbar">
+                  <svg aria-hidden="true"><use href="#i-clip" /></svg>
+                  <span class="mini-send is-ready" data-how-send><svg><use href="#i-arrow" /></svg></span>
+                </div>
               </div>
             </div>
-            <p class="how-num">1</p>
+            <p class="how-num">Step 1</p>
             <h3>Type or paste as usual</h3>
             <p>Write in ChatGPT or Claude, or attach a PDF, Word or text file.</p>
           </article>
 
           <article class="how-card">
-            <div class="how-visual tint-peach">
-              <ul class="mini-checks">
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Personal details</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Keys &amp; passwords</li>
-                <li class="flag"><svg aria-hidden="true"><use href="#i-alert" /></svg>Bank account found</li>
-              </ul>
+            <div class="how-visual tint-peach" data-how="scan" aria-hidden="true">
+              <div class="mini-window scan-panel">
+                <div class="scan-head">
+                  <span class="scan-status is-flag" data-how-status>1 issue found</span>
+                  <span class="scan-local"><svg><use href="#i-lock" /></svg>On device</span>
+                </div>
+                <span class="scan-bar"><i data-how-bar style="width:100%"></i></span>
+                <ul class="mini-checks">
+                  <li data-how-row><span class="row-icon"><svg><use href="#i-check" /></svg></span>Personal details</li>
+                  <li data-how-row><span class="row-icon"><svg><use href="#i-check" /></svg></span>Keys &amp; passwords</li>
+                  <li class="flag" data-how-row><span class="row-icon"><svg><use href="#i-alert" /></svg></span>Bank account found</li>
+                </ul>
+              </div>
             </div>
-            <p class="how-num">2</p>
+            <p class="how-num">Step 2</p>
             <h3>Preflight checks first</h3>
             <p>When you hit send, it scans the message and attachments on your device, in a blink.</p>
           </article>
 
           <article class="how-card">
-            <div class="how-visual tint-lilac">
-              <div class="mini-actions">
-                <span class="fake-btn fake-btn-primary">Replace with Safe Data</span>
-                <span class="fake-btn">Send Anyway</span>
+            <div class="how-visual tint-lilac" data-how="decide" aria-hidden="true">
+              <div class="mini-window mini-alert">
+                <div class="mini-alert-head"><span class="mini-alert-icon"><svg><use href="#i-alert" /></svg></span>Bank account found</div>
+                <p class="mini-value"><mark class="hit" data-how-value>50100234567890</mark></p>
+                <div class="mini-actions">
+                  <span class="fake-btn fake-btn-primary" data-how-replace><svg><use href="#i-shield" /></svg><span data-how-replace-label>Replace with Safe Data</span></span>
+                  <span class="fake-btn">Send Anyway</span>
+                </div>
+              </div>
+              <div class="demo-cursor" data-how-cursor>
+                <svg viewBox="0 0 24 24"><path d="M5 3.5 19 12l-6.4 1.5L9.4 19.6Z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" /></svg>
+                <span class="demo-ripple"></span>
               </div>
             </div>
-            <p class="how-num">3</p>
+            <p class="how-num">Step 3</p>
             <h3>You decide</h3>
             <p>Swap in safe placeholders, send anyway, or close it and edit. Preflight never blocks you.</p>
           </article>
 
           <article class="how-card">
-            <div class="how-visual tint-mint">
-              <div class="mini-window">
-                <div class="mini-bubble">Remind client to pay to account <code>[SYNTHETIC_BANK_ACCOUNT]</code> by Friday.</div>
-                <div class="mini-sent"><svg aria-hidden="true"><use href="#i-check" /></svg>Sent safely</div>
+            <div class="how-visual tint-mint" data-how="reply" aria-hidden="true">
+              <div class="mini-window mini-chat">
+                <div class="mini-bubble" data-how-bubble>Remind the client to pay into <code>[SYNTHETIC_BANK_ACCOUNT]</code> by Friday.</div>
+                <div class="mini-sent" data-how-sent><svg><use href="#i-check" /></svg>Sent safely</div>
+                <div class="mini-reply" data-how-reply>
+                  <span class="assistant-avatar"></span>
+                  <span class="typing-dots" data-how-dots hidden><i></i><i></i><i></i></span>
+                  <span data-how-reply-text>Sure! Here's a friendly reminder you can send today.</span>
+                </div>
               </div>
             </div>
-            <p class="how-num">4</p>
+            <p class="how-num">Step 4</p>
             <h3>The AI still helps</h3>
             <p>Your prompt keeps its meaning. Only the real values are gone.</p>
           </article>
@@ -255,33 +287,93 @@
     </section>
 
     <!-- Privacy -->
-    <section class="section" id="privacy">
-      <div class="container">
-        <div class="section-head">
-          <h2>Private by design.</h2>
-          <p>A privacy tool shouldn't need your data. Preflight doesn't.</p>
-        </div>
-        <div class="privacy-grid">
-          <div class="privacy-item">
-            <span class="privacy-icon"><svg aria-hidden="true"><use href="#i-device" /></svg></span>
-            <h3>Runs on your device</h3>
-            <p>Every check happens inside Chrome. No servers, no AI calls, nothing uploaded.</p>
+    <section class="privacy" id="privacy">
+      <div class="privacy-panel">
+        <div class="container">
+          <div class="section-head">
+            <h2>Private by <em>design.</em></h2>
+            <p>A privacy tool shouldn't need your data. Preflight doesn't.</p>
           </div>
-          <div class="privacy-item">
-            <span class="privacy-icon"><svg aria-hidden="true"><use href="#i-user" /></svg></span>
-            <h3>No account</h3>
-            <p>Install it and you're protected. No email, no sign-up, no tracking.</p>
+
+          <div class="bento">
+            <article class="bento-card bento-wide">
+              <div class="bento-visual" aria-hidden="true">
+                <div class="flow">
+                  <div class="flow-zone">
+                    <span class="flow-zone-label"><svg><use href="#i-device" /></svg>Your browser</span>
+                    <div class="flow-row">
+                      <span class="flow-node">Your prompt</span>
+                      <span class="flow-track"><i class="flow-packet"></i></span>
+                      <span class="flow-node flow-node-check"><svg><use href="#i-shield" /></svg>Preflight</span>
+                    </div>
+                  </div>
+                  <span class="flow-gap"><svg><use href="#i-x" /></svg></span>
+                  <div class="flow-node flow-node-off">
+                    <svg><use href="#i-cloud" /></svg>
+                    <span>Our servers<b>0 requests</b></span>
+                  </div>
+                </div>
+              </div>
+              <h3>Runs on your device</h3>
+              <p>Every check happens inside Chrome. No servers, no AI calls, nothing uploaded.</p>
+            </article>
+
+            <article class="bento-card">
+              <div class="bento-visual" aria-hidden="true">
+                <div class="ghost-form">
+                  <span class="ghost-field">Email address</span>
+                  <span class="ghost-field">Password</span>
+                  <span class="ghost-btn">Create account</span>
+                  <span class="ghost-stamp"><svg><use href="#i-check" /></svg>Not needed</span>
+                </div>
+              </div>
+              <h3>No account</h3>
+              <p>Install it and you're protected. No email, no sign-up, no tracking.</p>
+            </article>
+
+            <article class="bento-card">
+              <div class="bento-visual" aria-hidden="true">
+                <ul class="site-list">
+                  <li class="is-on"><span>chatgpt.com</span><i class="switch"></i></li>
+                  <li class="is-on"><span>claude.ai</span><i class="switch"></i></li>
+                  <li><span>Your email</span><i class="switch"></i></li>
+                  <li><span>Every other tab</span><i class="switch"></i></li>
+                </ul>
+              </div>
+              <h3>Only on AI sites</h3>
+              <p>It runs on ChatGPT and Claude and nowhere else. It can't see your other tabs.</p>
+            </article>
+
+            <article class="bento-card bento-wide">
+              <div class="bento-visual" aria-hidden="true">
+                <div class="history">
+                  <div class="history-head">
+                    <span>Local history</span>
+                    <span class="history-clear"><svg><use href="#i-trash" /></svg>Clear</span>
+                  </div>
+                  <div class="history-row">
+                    <span class="history-type"><i class="note-dot red"></i>PAN Number</span>
+                    <span class="history-when">Today, 2:14 PM</span>
+                    <span class="history-text"><svg><use href="#i-lock" /></svg>Text not stored</span>
+                  </div>
+                  <div class="history-row">
+                    <span class="history-type"><i class="note-dot red"></i>OpenAI API key</span>
+                    <span class="history-when">Today, 11:02 AM</span>
+                    <span class="history-text"><svg><use href="#i-lock" /></svg>Text not stored</span>
+                  </div>
+                  <div class="history-row">
+                    <span class="history-type"><i class="note-dot amber"></i>Phone number</span>
+                    <span class="history-when">Yesterday</span>
+                    <span class="history-text"><svg><use href="#i-lock" /></svg>Text not stored</span>
+                  </div>
+                </div>
+              </div>
+              <h3>Only counts are kept</h3>
+              <p>Your history shows what type was caught and when, never the text. Clear it anytime.</p>
+            </article>
           </div>
-          <div class="privacy-item">
-            <span class="privacy-icon"><svg aria-hidden="true"><use href="#i-trash" /></svg></span>
-            <h3>Only counts are kept</h3>
-            <p>Your history shows what type was caught and when, never the text. Clear it anytime.</p>
-          </div>
-          <div class="privacy-item">
-            <span class="privacy-icon"><svg aria-hidden="true"><use href="#i-globe" /></svg></span>
-            <h3>Only on AI sites</h3>
-            <p>It runs on ChatGPT and Claude and nowhere else. It can't see your other tabs.</p>
-          </div>
+
+          <p class="privacy-link"><a href="privacy.html">Read the full privacy policy<svg aria-hidden="true"><use href="#i-arrow" /></svg></a></p>
         </div>
       </div>
     </section>
@@ -408,6 +500,8 @@
 
   <script src="config.js"></script>
   <script src="main.js"></script>
+  <script src="anim.js"></script>
   <script src="demo.js"></script>
+  <script src="how.js"></script>
 </body>
 </html>

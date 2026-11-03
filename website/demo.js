@@ -17,7 +17,8 @@
   const replace = $("replace");
   const toast = $("toast");
   const toastText = $("toast-text");
-  const cursor = $("cursor");
+  const sleep = PreflightDemo.clock(demo);
+  const pointer = PreflightDemo.cursor(demo, $("cursor"), sleep);
 
   const PROMPT = [
     "Draft a payment reminder for our client. His PAN is ",
@@ -28,56 +29,6 @@
     { value: "sk-proj-a81F…kQ2", safe: "[REDACTED_OPENAI_KEY]" },
   ];
   const REPLY = "Here's a polite reminder you can send. I've kept the placeholders so you can fill in the real details yourself.";
-
-  // Time only advances while the demo is on screen and the tab is visible,
-  // so the loop pauses instead of burning CPU in the background. Timing is
-  // wall-clock based, not per animation frame, so slow devices keep pace.
-  let onScreen = true;
-  new IntersectionObserver(([entry]) => { onScreen = entry.isIntersecting; }).observe(demo);
-
-  function sleep(ms) {
-    return new Promise((resolve) => {
-      let elapsed = 0;
-      let last = performance.now();
-      (function tick() {
-        const now = performance.now();
-        if (onScreen && !document.hidden) elapsed += now - last;
-        last = now;
-        if (elapsed >= ms) resolve();
-        else setTimeout(tick, Math.min(100, ms - elapsed));
-      })();
-    });
-  }
-
-  function pointAt(el, dx = 0, dy = 0) {
-    const box = demo.getBoundingClientRect();
-    const r = el.getBoundingClientRect();
-    return { x: r.left - box.left + r.width / 2 + dx, y: r.top - box.top + r.height / 2 + dy };
-  }
-
-  function placeCursor({ x, y }, instant = false) {
-    if (instant) cursor.style.transition = "none";
-    // The arrow's tip sits at (5, 3) in its 22px box.
-    cursor.style.transform = `translate(${x - 5}px, ${y - 3}px)`;
-    if (instant) {
-      cursor.getBoundingClientRect();
-      cursor.style.transition = "";
-    }
-  }
-
-  async function moveTo(el, dx, dy) {
-    placeCursor(pointAt(el, dx, dy));
-    await sleep(950);
-  }
-
-  async function click(el) {
-    cursor.classList.add("is-clicking");
-    el.classList.add("is-pressed");
-    await sleep(140);
-    el.classList.remove("is-pressed");
-    await sleep(260);
-    cursor.classList.remove("is-clicking");
-  }
 
   async function typePrompt() {
     text.classList.add("is-typing");
@@ -110,7 +61,7 @@
     toast.classList.remove("is-on");
     replace.classList.remove("is-hover");
     const box = demo.getBoundingClientRect();
-    placeCursor({ x: box.width * 0.82, y: box.height * 0.62 }, true);
+    pointer.place({ x: box.width * 0.82, y: box.height * 0.62 }, true);
   }
 
   async function playOnce() {
@@ -120,8 +71,8 @@
     await sleep(350);
 
     // Hit send. Preflight intercepts before anything leaves the browser.
-    await moveTo(send);
-    await click(send);
+    await pointer.moveTo(send);
+    await pointer.click(send);
     text.querySelectorAll("mark").forEach((mark) => mark.classList.replace("token", "hit"));
     await sleep(300);
     scrim.classList.add("is-on");
@@ -129,15 +80,15 @@
     await sleep(900);
 
     // Choose "Replace with Safe Data".
-    await moveTo(replace, -30, 0);
+    await pointer.moveTo(replace, -30, 0);
     replace.classList.add("is-hover");
     await sleep(350);
-    await click(replace);
+    await pointer.click(replace);
     replace.classList.remove("is-hover");
     card.classList.remove("is-open");
     scrim.classList.remove("is-on");
     // Drift out of the way so the swap is easy to watch.
-    placeCursor(pointAt(send, -70, -90));
+    pointer.place(pointer.pointAt(send, -70, -90));
     await sleep(350);
 
     // Each value fades out and its placeholder fades in.
@@ -154,14 +105,14 @@
     await sleep(1100);
 
     // Send the safe version.
-    await moveTo(send);
-    await click(send);
+    await pointer.moveTo(send);
+    await pointer.click(send);
     const bubble = document.createElement("div");
     bubble.className = "chat-bubble pop-in";
     bubble.append(...text.childNodes);
     chat.appendChild(bubble);
     toastText.textContent = "Sent safely";
-    placeCursor(pointAt(demo.querySelector(".window-bar"), 120, 140));
+    pointer.place(pointer.pointAt(demo.querySelector(".window-bar"), 120, 140));
     await sleep(700);
 
     // The AI still does the job.

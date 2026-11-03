@@ -33,6 +33,13 @@
     }
   });
 
+  const nav = document.querySelector(".nav");
+  if (nav) {
+    const update = () => nav.classList.toggle("is-scrolled", window.scrollY > 8);
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  }
+
   document.querySelectorAll("[data-year]").forEach((node) => {
     node.textContent = String(new Date().getFullYear());
   });
