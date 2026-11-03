@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy · Preflight.ai</title>
+  <meta name="description" content="How the Preflight.ai Chrome extension handles your data. Personal mode runs entirely on your device." />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .legal { padding: 64px 0 96px; }
+    .legal h1 { margin-top: 0; font-size: clamp(44px, 6vw, 64px); }
+    .legal .updated { margin-top: 12px; color: var(--muted); font-size: 14px; }
+    .legal h2 { margin: 44px 0 12px; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+    .legal h3 { margin: 24px 0 8px; font-size: 17px; font-weight: 650; }
+    .legal p, .legal li { color: var(--ink-soft); font-size: 16px; }
+    .legal p + p { margin-top: 12px; }
+    .legal ul { margin: 10px 0 0; padding-left: 22px; display: grid; gap: 8px; }
+    .legal a { color: var(--green-ink); }
+    .summary {
+      margin-top: 32px;
+      padding: 22px 24px;
+      border-radius: 16px;
+      background: var(--green-tint);
+      border: 1px solid #c8ead4;
+    }
+    .summary p { color: var(--green-ink); font-weight: 500; }
+    .summary ul { margin-top: 12px; }
+    .summary li { color: var(--green-ink); }
+    table { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 14.5px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; color: var(--ink-soft); }
+    th { color: var(--ink); font-weight: 600; background: var(--soft); }
+    .table-wrap { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#111827" />
+      <path d="M16 6.5 24.5 9.5v6.8c0 5-3.6 8.6-8.5 10.2-4.9-1.6-8.5-5.2-8.5-10.2V9.5Z" fill="#22c55e" />
+      <path d="m12 16.2 2.8 2.8 5.4-5.6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+    </symbol>
+  </svg>
+
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html" aria-label="Preflight.ai home">
+        <svg class="brand-mark" aria-hidden="true"><use href="#logo" /></svg>
+        <span>Preflight</span>
+      </a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="index.html#how">How it works</a>
+        <a href="index.html#faq">FAQ</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal">
+    <div class="container container-narrow">
+      <h1>Privacy Policy</h1>
+      <p class="updated">Effective 4 November 2026</p>
+
+      <div class="summary">
+        <p>The short version:</p>
+        <ul>
+          <li>On the free Personal plan, everything happens on your device. Nothing you type is sent to us or anyone else.</li>
+          <li>We never store the text of your prompts. Local history keeps only what type of data was caught and when.</li>
+          <li>We don't sell data, show ads, or use analytics or tracking.</li>
+          <li>Business mode only starts if you enter an access token from your employer, and then sends only what's described below.</li>
+        </ul>
+      </div>
+
+      <h2>Who we are</h2>
+      <p>Preflight.ai ("Preflight", "we") is a Chrome extension built by Vansh Saxena that warns you before sensitive information is sent to AI chat tools. This policy explains what the extension accesses, what it stores, and what (if anything) leaves your device.</p>
+
+      <h2>What the extension reads</h2>
+      <p>Preflight runs only on <strong>chatgpt.com</strong>, <strong>chat.openai.com</strong> and <strong>claude.ai</strong>. On those sites, when you press send, it reads:</p>
+      <ul>
+        <li>the text of the message you are about to send, and</li>
+        <li>the contents of PDF, Word (.docx) and text files you attach, so they can be checked the same way.</li>
+      </ul>
+      <p>It does not read your past conversations, other tabs, other websites, your browsing history, or anything else on your computer.</p>
+
+      <h2>Personal mode (default)</h2>
+      <p>All checks run inside your browser. In Personal mode the extension makes no network requests of its own, so nothing is sent to us or any third party.</p>
+      <h3>Stored on your device</h3>
+      <p>Using Chrome's local extension storage, Preflight keeps:</p>
+      <ul>
+        <li><strong>Scan history</strong> (up to the last 500 checks): time, which AI site, the type of data detected (for example "PAN Number"), its risk level, what you chose (replace, send anyway, cancel) and the length of the message. It never includes the message text or the values that were detected.</li>
+        <li><strong>Your private keywords</strong>, if you add any in the popup.</li>
+      </ul>
+      <p>You can export or clear the history from the popup at any time. Uninstalling the extension deletes all of it.</p>
+
+      <h2>Business mode (optional)</h2>
+      <p>Business mode is only used if your organization gives you an access token and you enter it in the popup. Your organization's Preflight server then receives data from your browser. Your employer decides how that data is used, under its own policies.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>What is sent</th><th>When</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Scan metadata: time, detection types, risk level, the action you chose, how long the check took, extension version, browser type, AI site and whether text was typed, pasted or uploaded</td>
+              <td>After each check</td>
+            </tr>
+            <tr>
+              <td>The text of your message, for an AI check of things patterns can't catch (contracts, financial reports, strategy documents)</td>
+              <td>Only if your organization's plan includes AI checks, and only for messages that passed the on-device check</td>
+            </tr>
+            <tr>
+              <td>Your access token</td>
+              <td>With each request, to identify your organization</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The Preflight server is built so that message text sent for AI checks is classified in memory and is not logged or stored. Scan metadata never includes message text, previews, page titles or the detected values. Admins see counts and types of detections, not what anyone typed.</p>
+      <p>You can disconnect business mode at any time from the popup. This removes the token and any unsent metadata from your device.</p>
+
+      <h2>Permissions we ask for</h2>
+      <ul>
+        <li><strong>Access to chatgpt.com, chat.openai.com and claude.ai</strong>: to check messages before they are sent.</li>
+        <li><strong>Storage</strong>: to keep your settings, keywords and local history on your device.</li>
+        <li><strong>Alarms</strong>: in business mode, to retry sending metadata that couldn't be delivered while offline.</li>
+      </ul>
+
+      <h2>What we never do</h2>
+      <ul>
+        <li>Sell, rent or share your data with advertisers or data brokers.</li>
+        <li>Use analytics, tracking pixels or fingerprinting.</li>
+        <li>Use your data to train AI models.</li>
+        <li>Load code from the internet. Everything the extension runs ships inside it.</li>
+      </ul>
+      <p>Preflight's handling of user data complies with the Chrome Web Store User Data Policy, including its Limited Use requirements.</p>
+
+      <h2>Children</h2>
+      <p>Preflight is not directed at children under 13, and we do not knowingly collect information from them.</p>
+
+      <h2>Changes</h2>
+      <p>If this policy changes, we'll update the date above and describe material changes in the extension's release notes before they take effect.</p>
+
+      <h2>Contact</h2>
+      <p>Questions or requests about your data: <a data-contact data-contact-show-email data-contact-fallback="use the support link on our Chrome Web Store listing" href="#">email us</a>.</p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <a class="brand" href="index.html" aria-label="Preflight.ai home">
+        <svg class="brand-mark" aria-hidden="true"><use href="#logo" /></svg>
+        <span>Preflight</span>
+      </a>
+      <p class="footer-legal">© <span data-year>2026</span> Preflight.ai · Built by Vansh Saxena.</p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

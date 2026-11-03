@@ -9,6 +9,18 @@ confidential information is pasted into public AI tools.
 | `scripts/build.mjs` | Builds the Chrome Web Store zip into `dist/`. |
 | `backend/` | FastAPI server: `/config`, `/classify` (Layer 2 ML), `/api/scan-event`, `/api/dashboard/*`. |
 | `dashboard/` | Admin dashboard source (React + Vite). Project config not yet committed. |
+| `website/` | Static marketing site and privacy policy. No build step. |
+
+## Website
+
+```bash
+python3 -m http.server 4321 --directory website   # preview at http://localhost:4321
+```
+
+Set the Chrome Web Store link and contact email in `website/config.js`. Until
+they're filled in, install buttons read "Coming soon" and contact links stay
+hidden. Deploy the `website/` folder as-is to GitHub Pages, Vercel or Netlify.
+The privacy policy URL for the store listing is `<your-domain>/privacy.html`.
 
 ## Extension
 

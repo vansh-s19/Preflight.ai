@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preflight.ai: catch leaks before you send them to AI</title>
+  <meta name="description" content="Preflight is a free Chrome extension that warns you before personal data, passwords, API keys or confidential info is sent to ChatGPT or Claude. Checks run on your device." />
+  <meta property="og:title" content="Preflight.ai: catch leaks before you hit send" />
+  <meta property="og:description" content="A free Chrome extension that spots sensitive data in your AI prompts and swaps in safe placeholders. Runs on your device." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon32.png" />
+  <link rel="apple-touch-icon" href="assets/icon128.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#111827" />
+      <path d="M16 6.5 24.5 9.5v6.8c0 5-3.6 8.6-8.5 10.2-4.9-1.6-8.5-5.2-8.5-10.2V9.5Z" fill="#22c55e" />
+      <path d="m12 16.2 2.8 2.8 5.4-5.6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+    </symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.2 2.2 17.3A2 2 0 0 0 3.9 20h16.2a2 2 0 0 0 1.7-2.7L13.7 3.2a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 8v4.5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 20a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-device" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="#top" aria-label="Preflight.ai home">
+        <svg class="brand-mark" aria-hidden="true"><use href="#logo" /></svg>
+        <span>Preflight</span>
+      </a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="#how">How it works</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#plans">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="btn btn-small btn-dark" data-install data-install-short href="#">
+        <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
+        <span data-install-label>Add to Chrome</span>
+      </a>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="pill">
+            <svg aria-hidden="true"><use href="#i-shield" /></svg>
+            Free Chrome extension · Works on ChatGPT and Claude
+          </p>
+          <h1>Catch leaks before you hit&nbsp;send.</h1>
+          <ol class="steps-inline" aria-label="What Preflight does">
+            <li><span class="dot dot-blue"><svg aria-hidden="true"><use href="#i-search" /></svg></span>Spots sensitive data</li>
+            <li aria-hidden="true" class="steps-arrow">→</li>
+            <li><span class="dot dot-amber"><svg aria-hidden="true"><use href="#i-alert" /></svg></span>Warns you</li>
+            <li aria-hidden="true" class="steps-arrow">→</li>
+            <li><span class="dot dot-green"><svg aria-hidden="true"><use href="#i-swap" /></svg></span>Swaps in safe data</li>
+          </ol>
+          <div class="hero-cta">
+            <a class="btn btn-dark btn-large" data-install href="#">
+              <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
+              <span data-install-label>Add to Chrome, it's free</span>
+            </a>
+            <p class="hero-note">No sign-up. Your prompts never leave your browser.</p>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="Preview: Preflight warning on an AI chat">
+          <div class="window">
+            <div class="window-bar">
+              <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="window-url"><svg aria-hidden="true"><use href="#i-lock" /></svg>chatgpt.com</span>
+            </div>
+            <div class="window-body">
+              <div class="chat-bubble">Draft a payment reminder for our client. His PAN is <mark class="hit">ABCDE1234F</mark> and the Account Number: <mark class="hit">50100234567890</mark>. Also test it with our key <mark class="hit">sk-proj-a81F…kQ2</mark></div>
+              <div class="composer-row">
+                <span class="composer-placeholder">Message ChatGPT</span>
+                <span class="composer-send" aria-hidden="true"><svg><use href="#i-arrow" /></svg></span>
+              </div>
+            </div>
+
+            <div class="alert-card" role="img" aria-label="Preflight warning: Sensitive data detected, risk critical, 3 items found">
+              <div class="alert-head">
+                <span class="alert-icon"><svg aria-hidden="true"><use href="#i-alert" /></svg></span>
+                <div>
+                  <strong>Sensitive Data Detected</strong>
+                  <span>Review the details before proceeding.</span>
+                </div>
+                <span class="risk-badge">Critical</span>
+              </div>
+              <ul class="alert-list">
+                <li><span>PAN Number</span><code>[SYNTHETIC_PAN]</code></li>
+                <li><span>Bank Account Number</span><code>[SYNTHETIC_BANK_ACCOUNT]</code></li>
+                <li><span>OpenAI API Key</span><code>[REDACTED_OPENAI_KEY]</code></li>
+              </ul>
+              <div class="alert-actions">
+                <span class="fake-btn fake-btn-primary"><svg aria-hidden="true"><use href="#i-shield" /></svg>Replace with Safe Data</span>
+                <span class="fake-btn">Send Anyway</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What it catches -->
+    <section class="catches">
+      <div class="container">
+        <p class="catches-text">
+          Before anything leaves your browser, Preflight checks for
+          <span class="chip">Aadhaar numbers</span>
+          <span class="chip">PAN</span>
+          <span class="chip">GSTIN</span>
+          <span class="chip">bank accounts &amp; IFSC</span>
+          <span class="chip">phone numbers</span>
+          <span class="chip">API keys</span>
+          <span class="chip">passwords</span>
+          <span class="chip">private keys</span>
+          <span class="chip">database URLs</span>
+          <span class="chip">.env files</span>
+          <span class="chip">pasted source code</span>
+          and <span class="chip chip-accent">words only you know are private</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section" id="how">
+      <div class="container">
+        <div class="section-head">
+          <h2>How it works</h2>
+          <p>Nothing new to learn. Keep using AI the way you already do.</p>
+        </div>
+
+        <div class="how-grid">
+          <article class="how-card">
+            <div class="how-visual tint-sky">
+              <div class="mini-window">
+                <div class="mini-bubble">Summarise this contract for me… <span class="caret" aria-hidden="true"></span></div>
+                <div class="mini-attach"><svg aria-hidden="true"><use href="#i-file" /></svg>vendor_agreement.pdf</div>
+              </div>
+            </div>
+            <p class="how-num">1</p>
+            <h3>Type or paste as usual</h3>
+            <p>Write in ChatGPT or Claude, or attach a PDF, Word or text file.</p>
+          </article>
+
+          <article class="how-card">
+            <div class="how-visual tint-peach">
+              <ul class="mini-checks">
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Personal details</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Keys &amp; passwords</li>
+                <li class="flag"><svg aria-hidden="true"><use href="#i-alert" /></svg>Bank account found</li>
+              </ul>
+            </div>
+            <p class="how-num">2</p>
+            <h3>Preflight checks first</h3>
+            <p>When you hit send, it scans the message and attachments on your device, in a blink.</p>
+          </article>
+
+          <article class="how-card">
+            <div class="how-visual tint-lilac">
+              <div class="mini-actions">
+                <span class="fake-btn fake-btn-primary">Replace with Safe Data</span>
+                <span class="fake-btn">Send Anyway</span>
+              </div>
+            </div>
+            <p class="how-num">3</p>
+            <h3>You decide</h3>
+            <p>Swap in safe placeholders, send anyway, or close it and edit. Preflight never blocks you.</p>
+          </article>
+
+          <article class="how-card">
+            <div class="how-visual tint-mint">
+              <div class="mini-window">
+                <div class="mini-bubble">Remind client to pay to account <code>[SYNTHETIC_BANK_ACCOUNT]</code> by Friday.</div>
+                <div class="mini-sent"><svg aria-hidden="true"><use href="#i-check" /></svg>Sent safely</div>
+              </div>
+            </div>
+            <p class="how-num">4</p>
+            <h3>The AI still helps</h3>
+            <p>Your prompt keeps its meaning. Only the real values are gone.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Before / after -->
+    <section class="section section-soft">
+      <div class="container">
+        <div class="section-head">
+          <h2>Same prompt. <em>None of the risk.</em></h2>
+          <p>One click turns what you pasted into something safe to send.</p>
+        </div>
+
+        <div class="compare">
+          <figure class="compare-card">
+            <figcaption><span class="tag tag-red">What you pasted</span></figcaption>
+            <div class="prompt">
+              <p>Draft a payment reminder for our client.</p>
+              <p>His PAN is <mark class="hit">ABCDE1234F</mark> and payments go to Account Number: <mark class="hit">50100234567890</mark>, IFSC <mark class="hit">HDFC0001234</mark>.</p>
+              <p>Use our key <mark class="hit">sk-proj-a81F…kQ2</mark> to test the invoice API.</p>
+            </div>
+            <ul class="notes">
+              <li><span class="note-dot red"></span>Tax ID that can be misused for fraud</li>
+              <li><span class="note-dot red"></span>Bank details stored on someone else's server</li>
+              <li><span class="note-dot red"></span>A live key anyone could run up bills on</li>
+            </ul>
+          </figure>
+
+          <div class="compare-arrow" aria-hidden="true"><svg><use href="#i-arrow" /></svg></div>
+
+          <figure class="compare-card compare-card-safe">
+            <figcaption><span class="tag tag-green">What the AI receives</span></figcaption>
+            <div class="prompt">
+              <p>Draft a payment reminder for our client.</p>
+              <p>His PAN is <mark class="safe">[SYNTHETIC_PAN]</mark> and payments go to Account Number: <mark class="safe">[SYNTHETIC_BANK_ACCOUNT]</mark>, IFSC <mark class="safe">[SYNTHETIC_IFSC]</mark>.</p>
+              <p>Use our key <mark class="safe">[REDACTED_OPENAI_KEY]</mark> to test the invoice API.</p>
+            </div>
+            <ul class="notes">
+              <li><span class="note-dot green"></span>The AI can still write the reminder</li>
+              <li><span class="note-dot green"></span>Placeholders make it obvious what was removed</li>
+              <li><span class="note-dot green"></span>You review the result before it goes</li>
+            </ul>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Privacy -->
+    <section class="section" id="privacy">
+      <div class="container">
+        <div class="section-head">
+          <h2>Private by design.</h2>
+          <p>A privacy tool shouldn't need your data. Preflight doesn't.</p>
+        </div>
+        <div class="privacy-grid">
+          <div class="privacy-item">
+            <span class="privacy-icon"><svg aria-hidden="true"><use href="#i-device" /></svg></span>
+            <h3>Runs on your device</h3>
+            <p>Every check happens inside Chrome. No servers, no AI calls, nothing uploaded.</p>
+          </div>
+          <div class="privacy-item">
+            <span class="privacy-icon"><svg aria-hidden="true"><use href="#i-user" /></svg></span>
+            <h3>No account</h3>
+            <p>Install it and you're protected. No email, no sign-up, no tracking.</p>
+          </div>
+          <div class="privacy-item">
+            <span class="privacy-icon"><svg aria-hidden="true"><use href="#i-trash" /></svg></span>
+            <h3>Only counts are kept</h3>
+            <p>Your history shows what type was caught and when, never the text. Clear it anytime.</p>
+          </div>
+          <div class="privacy-item">
+            <span class="privacy-icon"><svg aria-hidden="true"><use href="#i-globe" /></svg></span>
+            <h3>Only on AI sites</h3>
+            <p>It runs on ChatGPT and Claude and nowhere else. It can't see your other tabs.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Plans -->
+    <section class="section section-soft" id="plans">
+      <div class="container">
+        <div class="section-head">
+          <h2>Two ways in.</h2>
+          <p>Protect yourself today. Protect your whole team when you're ready.</p>
+        </div>
+
+        <div class="plans">
+          <article class="plan">
+            <div class="plan-top">
+              <span class="tag tag-green">Personal · Free</span>
+              <h3>For you</h3>
+              <p class="plan-price"><strong>₹0</strong> forever</p>
+            </div>
+            <ul class="plan-list">
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Every detector, on your device</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>PDF, Word and text attachments</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Your own private keywords</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>One-click safe replacements</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Local history you can export or clear</li>
+            </ul>
+            <a class="btn btn-dark" data-install href="#">
+              <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
+              <span data-install-label>Add to Chrome</span>
+            </a>
+          </article>
+
+          <article class="plan plan-team">
+            <div class="plan-top">
+              <span class="tag tag-blue">Teams</span>
+              <h3>For your company</h3>
+              <p class="plan-price"><strong>Custom</strong> for your team size</p>
+            </div>
+            <ul class="plan-list">
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Everything in Personal</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Company-wide keyword lists</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>AI checks for contracts, financials and strategy docs</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Admin dashboard: counts and types, never prompt text</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Roll out to every laptop through Google Admin</li>
+            </ul>
+            <a class="btn btn-light" data-contact data-contact-soon href="#">Talk to us</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="container container-narrow">
+        <div class="section-head">
+          <h2>Questions, answered.</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Does Preflight read my chats?</summary>
+            <p>It only looks at the message you're about to send, at the moment you hit send, and it does that on your own computer. On the free plan nothing is sent to anyone, including us.</p>
+          </details>
+          <details>
+            <summary>Which sites does it work on?</summary>
+            <p>ChatGPT (chatgpt.com and chat.openai.com) and Claude (claude.ai). More AI tools are on the way.</p>
+          </details>
+          <details>
+            <summary>Will it stop me from sending?</summary>
+            <p>Never. It shows you what it found and you choose: replace with safe data, send anyway, or go back and edit. If anything goes wrong on our side, your message goes through as normal.</p>
+          </details>
+          <details>
+            <summary>What does "Replace with Safe Data" do?</summary>
+            <p>It swaps each sensitive value for a clear placeholder like <code>[SYNTHETIC_PAN]</code> or <code>[REDACTED_OPENAI_KEY]</code>. You see the edited prompt before it's sent, and the AI can still do the task.</p>
+          </details>
+          <details>
+            <summary>Does it check files I attach?</summary>
+            <p>Yes. PDF, Word (.docx) and text files are read on your device and checked the same way as typed text.</p>
+          </details>
+          <details>
+            <summary>Can I add my own words to watch for?</summary>
+            <p>Yes. Open the Preflight popup and add things like project code names, client names or anything else you never want to paste by accident.</p>
+          </details>
+          <details>
+            <summary>How do companies roll it out?</summary>
+            <p>An admin shares a company access token, or IT installs Preflight on every Chrome browser through Google Admin. Admins see how often and what type of data was caught, never what anyone typed.</p>
+          </details>
+          <details>
+            <summary>Does it catch everything?</summary>
+            <p>No tool can. Preflight is a safety net for the mistakes that happen most: IDs, financial details, keys, passwords and your own private terms. It's not a reason to stop thinking before you paste.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final">
+      <div class="container final-inner">
+        <p class="final-kicker">Free · No sign-up · Runs on your device</p>
+        <h2>Use AI without the&nbsp;oops.</h2>
+        <p>Install Preflight once. It quietly checks every prompt from then on.</p>
+        <a class="btn btn-dark btn-large" data-install href="#">
+          <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
+          <span data-install-label>Add to Chrome, it's free</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <a class="brand" href="#top" aria-label="Preflight.ai home">
+        <svg class="brand-mark" aria-hidden="true"><use href="#logo" /></svg>
+        <span>Preflight</span>
+      </a>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="privacy.html">Privacy policy</a>
+        <a href="#faq">FAQ</a>
+        <a data-contact href="#">Contact</a>
+      </nav>
+      <p class="footer-legal">© <span data-year>2026</span> Preflight.ai · Built by Vansh Saxena. ChatGPT is a trademark of OpenAI and Claude is a trademark of Anthropic. Preflight is not affiliated with either.</p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
