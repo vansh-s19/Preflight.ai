@@ -83,21 +83,25 @@
           </div>
         </div>
 
-        <div class="hero-visual" aria-label="Preview: Preflight warning on an AI chat">
-          <div class="window">
-            <div class="window-bar">
-              <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span class="window-url"><svg aria-hidden="true"><use href="#i-lock" /></svg>chatgpt.com</span>
+        <div class="hero-visual">
+          <!-- Live demo, driven by demo.js. The markup below is the static
+               fallback (no JS / reduced motion): the warning moment. -->
+          <div class="window demo" data-demo role="img" aria-label="Demo: someone types a prompt containing a PAN, a bank account number and an API key into ChatGPT and clicks send. Preflight shows a warning, they click Replace with Safe Data, the values become placeholders, and the safe prompt is sent.">
+            <div class="window-bar" aria-hidden="true">
+              <span class="window-dots"><i></i><i></i><i></i></span>
+              <span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span>
             </div>
-            <div class="window-body">
-              <div class="chat-bubble">Draft a payment reminder for our client. His PAN is <mark class="hit">ABCDE1234F</mark> and the Account Number: <mark class="hit">50100234567890</mark>. Also test it with our key <mark class="hit">sk-proj-a81F…kQ2</mark></div>
-              <div class="composer-row">
-                <span class="composer-placeholder">Message ChatGPT</span>
-                <span class="composer-send" aria-hidden="true"><svg><use href="#i-arrow" /></svg></span>
+            <div class="window-body" aria-hidden="true">
+              <div class="chat-area" data-demo-chat></div>
+              <div class="composer">
+                <div class="composer-text" data-demo-text>Draft a payment reminder for our client. His PAN is <mark class="hit">ABCDE1234F</mark> and Account Number: <mark class="hit">50100234567890</mark>. Test it with our key <mark class="hit">sk-proj-a81F…kQ2</mark></div>
+                <span class="composer-send" data-demo-send><svg><use href="#i-arrow" /></svg></span>
               </div>
             </div>
+            <div class="demo-scrim is-on" data-demo-scrim aria-hidden="true"></div>
+            <div class="demo-toast" data-demo-toast aria-hidden="true"><svg><use href="#i-check" /></svg><span data-demo-toast-text>3 items protected</span></div>
 
-            <div class="alert-card" role="img" aria-label="Preflight warning: Sensitive data detected, risk critical, 3 items found">
+            <div class="alert-card is-open" data-demo-card aria-hidden="true">
               <div class="alert-head">
                 <span class="alert-icon"><svg aria-hidden="true"><use href="#i-alert" /></svg></span>
                 <div>
@@ -112,9 +116,14 @@
                 <li><span>OpenAI API Key</span><code>[REDACTED_OPENAI_KEY]</code></li>
               </ul>
               <div class="alert-actions">
-                <span class="fake-btn fake-btn-primary"><svg aria-hidden="true"><use href="#i-shield" /></svg>Replace with Safe Data</span>
+                <span class="fake-btn fake-btn-primary" data-demo-replace><svg aria-hidden="true"><use href="#i-shield" /></svg>Replace with Safe Data</span>
                 <span class="fake-btn">Send Anyway</span>
               </div>
+            </div>
+
+            <div class="demo-cursor" data-demo-cursor aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 3.5 19 12l-6.4 1.5L9.4 19.6Z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" /></svg>
+              <span class="demo-ripple"></span>
             </div>
           </div>
         </div>
@@ -399,5 +408,6 @@
 
   <script src="config.js"></script>
   <script src="main.js"></script>
+  <script src="demo.js"></script>
 </body>
 </html>
