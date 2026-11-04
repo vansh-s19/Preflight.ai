@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Frame</title>
+  <!-- 1280x800 store screenshot: caption over a raw capture.
+       ?img=<path>&title=<text>&sub=<text>&layout=wide|side -->
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1280px; height: 800px; overflow: hidden; }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: linear-gradient(160deg, #eef3fb, #f7f8fa 55%, #eaf5f1);
+      color: #172033;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    header { padding: 44px 40px 28px; text-align: center; }
+    h1 { margin: 0; font-size: 40px; line-height: 1.15; letter-spacing: -0.025em; }
+    p { margin: 10px 0 0; color: #4a5568; font-size: 19px; }
+    .shot {
+      display: block;
+      width: 1056px;
+      height: 660px;
+      border-radius: 14px 14px 0 0;
+      box-shadow: 0 24px 60px rgba(23, 32, 51, 0.22);
+      object-fit: cover;
+      object-position: top;
+    }
+    body.side { flex-direction: row; justify-content: center; gap: 72px; }
+    body.side header { width: 460px; padding: 0; text-align: left; }
+    body.side h1 { font-size: 44px; }
+    body.side .shot {
+      width: auto;
+      height: auto;
+      max-height: 720px;
+      border-radius: 12px;
+      border: 1px solid #d9dee8;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title"></h1>
+    <p id="sub"></p>
+  </header>
+  <img class="shot" id="shot" alt="" />
+  <script>
+    const params = new URLSearchParams(location.search);
+    document.getElementById("title").textContent = params.get("title") || "";
+    document.getElementById("sub").textContent = params.get("sub") || "";
+    document.getElementById("shot").src = params.get("img") || "";
+    if (params.get("layout") === "side") document.body.classList.add("side");
+  </script>
+</body>
+</html>

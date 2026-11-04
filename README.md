@@ -7,6 +7,7 @@ confidential information is pasted into public AI tools.
 |---|---|
 | `extension/` | Chrome extension (Manifest V3). Personal mode runs fully on-device; business mode connects to the backend. See [extension/README.md](extension/README.md). |
 | `scripts/build.mjs` | Builds the Chrome Web Store zip into `dist/`. |
+| `store/` | Web Store listing text, permission and privacy answers, screenshots and promo tile, and the pre-submission test checklist. `node scripts/store-assets.mjs` re-renders the images. |
 | `backend/` | FastAPI server: `/config`, `/classify` (Layer 2 ML), `/api/scan-event`, `/api/dashboard/*`. |
 | `dashboard/` | Admin dashboard source (React + Vite). Project config not yet committed. |
 | `website/` | Static marketing site and privacy policy. No build step. |

@@ -450,7 +450,10 @@
     safeText = replaceType(safeText, GST_REGEX, "gst");
     safeText = replaceType(safeText, PAN_REGEX, "pan");
     safeText = replaceType(safeText, IFSC_REGEX, "ifsc");
-    safeText = replaceType(safeText, BANK_ACCOUNT_REGEX, "bank_account");
+    // The pattern includes the "Account number:" label; swap only the number.
+    safeText = replaceType(safeText, BANK_ACCOUNT_REGEX, "bank_account", (match, number) =>
+      match.replace(number, SAFE_REPLACEMENTS.bank_account)
+    );
     safeText = replaceType(safeText, AADHAAR_REGEX, "aadhaar", (match) =>
       isPlausibleAadhaar(match) ? SAFE_REPLACEMENTS.aadhaar : match
     );

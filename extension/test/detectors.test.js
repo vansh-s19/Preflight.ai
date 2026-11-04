@@ -92,6 +92,12 @@ async function expectType(text, type) {
     "10-digit numbers not starting with 6-9 must not be flagged as Indian mobile numbers"
   );
 
+  // Regression: replacing a bank account keeps its "account number" label.
+  assert.equal(
+    await window.SentinelDetectors.sanitize("Pay to account number 1234567890123456 today"),
+    "Pay to account number [SYNTHETIC_BANK_ACCOUNT] today"
+  );
+
   // User filters: switched-off detector types and "not sensitive" values.
   {
     const text = "PAN ABCDE1234F, mail me at a@b.co";
