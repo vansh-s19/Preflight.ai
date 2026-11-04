@@ -160,29 +160,33 @@ h1 {
   text-wrap: balance;
 }
 
+/* Sized to sit beside the laptop without crowding it. */
+.hero h1 { font-size: clamp(40px, 4.3vw, 62px); }
+
 .steps-inline {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  margin: 32px 0 0;
+  margin: 28px 0 0;
   padding: 0;
   list-style: none;
   color: var(--ink-soft);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
 }
 .steps-inline li { display: inline-flex; align-items: center; gap: 8px; }
 .steps-arrow { color: #94a3b8; }
-.dot { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; }
-.dot svg { width: 16px; height: 16px; }
+.dot { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; }
+.dot svg { width: 15px; height: 15px; }
 .dot-blue { background: var(--blue-tint); color: var(--blue); }
 .dot-amber { background: var(--amber-tint); color: var(--amber); }
 .dot-green { background: var(--green-tint); color: var(--green); }
 
-.hero-cta { margin-top: 40px; display: grid; justify-items: start; gap: 22px; }
+.hero-cta { margin-top: 36px; display: grid; justify-items: start; gap: 20px; }
+.hero .btn-large { min-height: 52px; padding: 0 26px; font-size: 16px; }
 .hero-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
-.hero-trust { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; list-style: none; color: var(--ink-soft); font-size: 14.5px; }
+.hero-trust { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; list-style: none; color: var(--ink-soft); font-size: 14px; }
 .hero-trust li { display: inline-flex; align-items: center; gap: 7px; }
 .hero-trust svg { width: 18px; height: 18px; padding: 3px; border-radius: 50%; background: var(--green-tint); color: var(--green); }
 
@@ -968,7 +972,7 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 
 @media (max-width: 860px) {
   /* Sized so "Catch leaks before" always fits on its line. */
-  h1 { font-size: clamp(32px, 10vw, 56px); }
+  h1, .hero h1 { font-size: clamp(32px, 10vw, 56px); }
   .hero { padding: 108px 0 64px; }
   .privacy-panel { padding: 72px 0; }
   .hero-grid { gap: 44px; width: min(1280px, 100% - 32px); }
