@@ -23,12 +23,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
 
-from auth import OrgRecord, plan_includes, resolve_org
+from auth import OrgRecord, database_path, init_auth_tables, plan_features, plan_includes, resolve_org
 
 # ---------------------------------------------------------------------------
 # Logging — application-level only; prompt content must never appear here
@@ -48,7 +48,6 @@ _classifier_predict = None   # set in lifespan startup
 _ner_extract = None          # set in lifespan startup
 
 BASE_DIR = Path(__file__).resolve().parent
-DATABASE_PATH = BASE_DIR / "preflight_monitoring.sqlite3"
 VALID_SEVERITIES = {"critical", "high", "medium", "low", "none"}
 BUSINESS_LAYER2_TYPES = {"contract", "financial_report", "hr_doc", "source_code", "strategy_doc", "customer_data"}
 
@@ -66,6 +65,7 @@ class ConfigResponse(BaseModel):
     plan: str
     layer2_enabled: bool
     layer3_enabled: bool
+    features: list[str]
 
 
 class ClassifyRequest(BaseModel):
@@ -106,7 +106,8 @@ class ScanEventIn(BaseModel):
     input_source: str = Field(default="text_field", max_length=60)
     user_id: Optional[str] = None
     device_id: Optional[str] = None
-    organization_id: Optional[str] = None
+    # organization_id is deliberately absent: it comes from the access token,
+    # and any value a client sends is ignored.
 
     @field_validator("input_preview")
     @classmethod
@@ -119,6 +120,7 @@ class ScanEventIn(BaseModel):
 
 class ScanEventOut(ScanEventIn):
     id: int
+    organization_id: str
 
 
 class ScanEventCreated(BaseModel):
@@ -215,7 +217,8 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 
 def init_database() -> None:
-    with sqlite3.connect(DATABASE_PATH) as conn:
+    with sqlite3.connect(database_path()) as conn:
+        init_auth_tables(conn)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS scans (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -254,10 +257,11 @@ def init_database() -> None:
                 conn.execute(f"ALTER TABLE scans ADD COLUMN {column} {definition}")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_scans_ai_platform ON scans(ai_platform)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_scans_domain ON scans(domain)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_scans_org_timestamp ON scans(organization_id, timestamp)")
 
 
 def get_db() -> sqlite3.Connection:
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(database_path())
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -315,9 +319,10 @@ def row_to_scan(row: sqlite3.Row) -> dict[str, Any]:
     }
 
 
-def load_scan_rows(filters: DashboardFilters, limit: Optional[int] = None) -> list[dict[str, Any]]:
-    clauses: list[str] = []
-    params: list[Any] = []
+def load_scan_rows(org_id: str, filters: DashboardFilters, limit: Optional[int] = None) -> list[dict[str, Any]]:
+    # Every dashboard query is scoped to the caller's organisation.
+    clauses: list[str] = ["organization_id = ?"]
+    params: list[Any] = [org_id]
     if filters.start_date:
         clauses.append("timestamp >= ?")
         params.append(iso_utc(filters.start_date))
@@ -337,9 +342,7 @@ def load_scan_rows(filters: DashboardFilters, limit: Optional[int] = None) -> li
         clauses.append("domain LIKE ?")
         params.append(f"%{filters.domain}%")
 
-    query = "SELECT * FROM scans"
-    if clauses:
-        query += " WHERE " + " AND ".join(clauses)
+    query = "SELECT * FROM scans WHERE " + " AND ".join(clauses)
     query += " ORDER BY timestamp DESC"
     if limit is not None:
         query += " LIMIT ?"
@@ -408,7 +411,7 @@ app.add_middleware(
 
 
 # ---------------------------------------------------------------------------
-# Auth helper — shared by /config and /classify
+# Auth helper — required by every endpoint except /health
 # ---------------------------------------------------------------------------
 
 def _require_org(request: Request) -> OrgRecord:
@@ -522,7 +525,7 @@ async def health() -> HealthResponse:
 
 
 @app.post("/api/scan-event", response_model=ScanEventCreated, tags=["monitoring"])
-async def create_scan_event(event: ScanEventIn) -> ScanEventCreated:
+async def create_scan_event(event: ScanEventIn, org: OrgRecord = Depends(_require_org)) -> ScanEventCreated:
     """
     Persist a telemetry event for the centralized monitoring dashboard.
     The payload contains a truncated preview only; full prompts are rejected
@@ -556,7 +559,7 @@ async def create_scan_event(event: ScanEventIn) -> ScanEventCreated:
                 event.input_source,
                 event.user_id,
                 event.device_id,
-                event.organization_id,
+                org.org_id,
             ),
         )
         conn.commit()
@@ -565,6 +568,7 @@ async def create_scan_event(event: ScanEventIn) -> ScanEventCreated:
 
 @app.get("/api/dashboard/summary", response_model=DashboardSummary, tags=["dashboard"])
 async def dashboard_summary(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -574,7 +578,7 @@ async def dashboard_summary(
     ai_platform: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> DashboardSummary:
-    rows = load_scan_rows(filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
+    rows = load_scan_rows(org.org_id, filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
     total = len(rows)
     latest = rows[0] if rows else None
     return DashboardSummary(
@@ -592,6 +596,7 @@ async def dashboard_summary(
 
 @app.get("/api/dashboard/recent-events", response_model=list[ScanEventOut], tags=["dashboard"])
 async def dashboard_recent_events(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -603,11 +608,12 @@ async def dashboard_recent_events(
     limit: int = 50,
 ) -> list[dict[str, Any]]:
     filters = filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain)
-    return load_scan_rows(filters, limit=max(1, min(limit, 200)))
+    return load_scan_rows(org.org_id, filters, limit=max(1, min(limit, 200)))
 
 
 @app.get("/api/dashboard/timeline", response_model=list[DashboardPoint], tags=["dashboard"])
 async def dashboard_timeline(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -617,7 +623,7 @@ async def dashboard_timeline(
     ai_platform: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> list[DashboardPoint]:
-    rows = load_scan_rows(filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
+    rows = load_scan_rows(org.org_id, filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
     buckets: dict[str, dict[str, int]] = {}
     for row in rows:
         day = row["timestamp"][:10]
@@ -634,6 +640,7 @@ async def dashboard_timeline(
 
 @app.get("/api/dashboard/severity", response_model=list[CountItem], tags=["dashboard"])
 async def dashboard_severity(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     layer: Optional[Literal["layer1", "layer2"]] = None,
@@ -642,7 +649,7 @@ async def dashboard_severity(
     ai_platform: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> list[CountItem]:
-    rows = load_scan_rows(filters_from_request(start_date, end_date, None, layer, category, browser_type, ai_platform, domain))
+    rows = load_scan_rows(org.org_id, filters_from_request(start_date, end_date, None, layer, category, browser_type, ai_platform, domain))
     counts = {severity: 0 for severity in ("critical", "high", "medium", "low")}
     for row in rows:
         if row["severity"] in counts:
@@ -652,6 +659,7 @@ async def dashboard_severity(
 
 @app.get("/api/dashboard/categories", response_model=list[CountItem], tags=["dashboard"])
 async def dashboard_categories(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -660,7 +668,7 @@ async def dashboard_categories(
     ai_platform: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> list[CountItem]:
-    rows = load_scan_rows(filters_from_request(start_date, end_date, severity, layer, None, browser_type, ai_platform, domain))
+    rows = load_scan_rows(org.org_id, filters_from_request(start_date, end_date, severity, layer, None, browser_type, ai_platform, domain))
     counts = {name: 0 for name in ("PII", "Credentials", "Financial Data", "Business Confidential", "Legal Data", "Other")}
     for row in rows:
         for detection in row["layer1_detections"] + row["layer2_detections"]:
@@ -670,6 +678,7 @@ async def dashboard_categories(
 
 @app.get("/api/dashboard/heatmap", response_model=list[HeatmapItem], tags=["dashboard"])
 async def dashboard_heatmap(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -679,7 +688,7 @@ async def dashboard_heatmap(
     ai_platform: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> list[HeatmapItem]:
-    rows = load_scan_rows(filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
+    rows = load_scan_rows(org.org_id, filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
     aliases = {
         "Aadhaar": {"aadhaar"},
         "API Keys": {"openai_key", "anthropic_key", "aws_key", "generic_secret"},
@@ -716,6 +725,7 @@ async def dashboard_heatmap(
 
 @app.get("/api/dashboard/source/browser-distribution", response_model=list[CountItem], tags=["dashboard"])
 async def dashboard_browser_distribution(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -724,7 +734,7 @@ async def dashboard_browser_distribution(
     ai_platform: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> list[CountItem]:
-    rows = load_scan_rows(filters_from_request(start_date, end_date, severity, layer, category, None, ai_platform, domain))
+    rows = load_scan_rows(org.org_id, filters_from_request(start_date, end_date, severity, layer, category, None, ai_platform, domain))
     browsers = ["chrome", "edge", "brave", "safari", "firefox"]
     counts = {name: 0 for name in browsers}
     for row in rows:
@@ -736,6 +746,7 @@ async def dashboard_browser_distribution(
 
 @app.get("/api/dashboard/source/ai-platform-distribution", response_model=list[CountItem], tags=["dashboard"])
 async def dashboard_ai_platform_distribution(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -744,7 +755,7 @@ async def dashboard_ai_platform_distribution(
     browser_type: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> list[CountItem]:
-    rows = load_scan_rows(filters_from_request(start_date, end_date, severity, layer, category, browser_type, None, domain))
+    rows = load_scan_rows(org.org_id, filters_from_request(start_date, end_date, severity, layer, category, browser_type, None, domain))
     platforms = ["chatgpt", "claude", "gemini", "copilot", "perplexity"]
     counts = {name: 0 for name in platforms}
     for row in rows:
@@ -756,6 +767,7 @@ async def dashboard_ai_platform_distribution(
 
 @app.get("/api/dashboard/export/json", tags=["dashboard"])
 async def dashboard_export_json(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -765,11 +777,12 @@ async def dashboard_export_json(
     ai_platform: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> list[dict[str, Any]]:
-    return load_scan_rows(filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
+    return load_scan_rows(org.org_id, filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
 
 
 @app.get("/api/dashboard/export/csv", tags=["dashboard"])
 async def dashboard_export_csv(
+    org: OrgRecord = Depends(_require_org),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     severity: Optional[str] = None,
@@ -779,7 +792,7 @@ async def dashboard_export_csv(
     ai_platform: Optional[str] = None,
     domain: Optional[str] = None,
 ) -> Response:
-    rows = load_scan_rows(filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
+    rows = load_scan_rows(org.org_id, filters_from_request(start_date, end_date, severity, layer, category, browser_type, ai_platform, domain))
     output = io.StringIO()
     fieldnames = [
         "id", "timestamp", "input_preview", "layer1_detections", "layer2_detections",
@@ -815,6 +828,7 @@ async def config(request: Request) -> ConfigResponse:
         plan=org.plan,
         layer2_enabled=plan_includes(org.plan, "layer2"),
         layer3_enabled=plan_includes(org.plan, "layer3"),
+        features=plan_features(org.plan),
     )
 
 
