@@ -457,16 +457,10 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 .section-head h2 em { color: var(--green); font-style: italic; }
 .section-head p { margin-top: 14px; color: var(--muted); font-size: 17px; }
 
-/* How it works: a hairline row of gradient tiles, each holding a browser
-   window that runs off the tile's bottom edge. */
+/* How it works: a row of gradient tiles, each holding a browser window that
+   runs off the tile's bottom edge. */
 #how .container { width: min(1280px, 100% - 32px); }
-.how-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
-}
-.how-card { padding: 14px 14px 28px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.how-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px 24px; }
 .how-card h3 { display: flex; align-items: baseline; gap: 10px; margin-top: 22px; padding-inline: 4px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 .how-num { color: #cbd5e1; font-size: 18px; font-weight: 300; }
 .how-card > p { margin-top: 8px; padding-left: 24px; padding-right: 4px; color: var(--muted); font-size: 14.5px; }
