@@ -10,9 +10,13 @@ let dashboardEvents = [];
 let protection = PreflightProtection.normalize(null);
 let currentHost = "";
 let currentTabId = null;
+let detectorPrefs = { disabledTypes: [], ignoredHashes: [] };
+
+const DETECTOR_PREFS_KEY = window.SentinelDetectors.PREFS_KEY;
+const DETECTOR_GROUPS = { personal: "Personal & financial", secrets: "Keys & secrets", files: "Files & code" };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const result = await chrome.storage.local.get([DASHBOARD_EVENTS_KEY, "companyKeywords", PreflightProtection.KEY]);
+  const result = await chrome.storage.local.get([DASHBOARD_EVENTS_KEY, "companyKeywords", PreflightProtection.KEY, DETECTOR_PREFS_KEY]);
   dashboardEvents = Array.isArray(result[DASHBOARD_EVENTS_KEY])
     ? result[DASHBOARD_EVENTS_KEY]
     : [];
@@ -21,6 +25,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderProtection();
   renderSiteWarning();
+  detectorPrefs = normalizeDetectorPrefs(result[DETECTOR_PREFS_KEY]);
+  renderDetectorChecks();
   renderDashboard(dashboardEvents);
   document.getElementById("keywords-input").value = (result.companyKeywords || []).join("\n");
 
@@ -41,6 +47,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("site-toggle").addEventListener("change", (event) => {
     const others = protection.disabledSites.filter((site) => site !== currentHost);
     saveProtection({ ...protection, disabledSites: event.target.checked ? others : [...others, currentHost] });
+  });
+  document.getElementById("detector-groups").addEventListener("change", (event) => {
+    const type = event.target.dataset.detector;
+    if (!type) return;
+    const others = detectorPrefs.disabledTypes.filter((item) => item !== type);
+    saveDetectorPrefs({ ...detectorPrefs, disabledTypes: event.target.checked ? others : [...others, type] });
+  });
+  document.getElementById("clear-ignored-btn").addEventListener("click", () => {
+    if (!window.confirm("Warn about every value you marked \"not sensitive\" again?")) return;
+    saveDetectorPrefs({ ...detectorPrefs, ignoredHashes: [] });
   });
   document.getElementById("export-csv").addEventListener("click", () => exportCsv(dashboardEvents));
   document.getElementById("export-json").addEventListener("click", () => exportJson(dashboardEvents));
@@ -70,6 +86,35 @@ async function renderSiteWarning() {
   if (!currentHost || currentTabId === null) return;
   const { tabHealth = {} } = await chrome.storage.session.get(["tabHealth"]);
   document.getElementById("site-warning").hidden = tabHealth[currentTabId] !== "broken";
+}
+
+function normalizeDetectorPrefs(value) {
+  const prefs = value && typeof value === "object" ? value : {};
+  return {
+    disabledTypes: Array.isArray(prefs.disabledTypes) ? prefs.disabledTypes : [],
+    ignoredHashes: Array.isArray(prefs.ignoredHashes) ? prefs.ignoredHashes : [],
+  };
+}
+
+async function saveDetectorPrefs(next) {
+  detectorPrefs = normalizeDetectorPrefs(next);
+  await chrome.storage.local.set({ [DETECTOR_PREFS_KEY]: detectorPrefs });
+  renderDetectorChecks();
+}
+
+function renderDetectorChecks() {
+  const disabled = new Set(detectorPrefs.disabledTypes);
+  document.getElementById("detector-groups").innerHTML = Object.entries(DETECTOR_GROUPS).map(([group, title]) => `
+    <div>
+      <h3>${escapeHtml(title)}</h3>
+      ${window.SentinelDetectors.DETECTOR_TYPES.filter((detector) => detector.group === group).map((detector) => `
+        <label class="check-row">
+          <input type="checkbox" data-detector="${escapeHtml(detector.type)}" ${disabled.has(detector.type) ? "" : "checked"} />
+          <span>${escapeHtml(detector.label)}</span>
+        </label>`).join("")}
+    </div>`).join("");
+  setText("ignored-count", detectorPrefs.ignoredHashes.length);
+  document.getElementById("clear-ignored-btn").hidden = detectorPrefs.ignoredHashes.length === 0;
 }
 
 async function saveProtection(next) {

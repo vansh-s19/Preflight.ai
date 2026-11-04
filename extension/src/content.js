@@ -444,12 +444,13 @@
           pendingSend = null;
           logEvent({ stage: "pre_send", text, findings, action: "replaced_with_safe_data", scanStartedAt, attachmentCount });
         },
-        onProceed: () => {
+        onProceed: (action = "proceeded") => {
           pendingSend.approved = true;
-          logEvent({ stage: "pre_send", text, findings, action: "proceeded", scanStartedAt, attachmentCount });
+          logEvent({ stage: "pre_send", text, findings, action, scanStartedAt, attachmentCount });
           pendingAttachments = [];
           resumeSend(inputBox, sendButton);
         },
+        onNotSensitive: (dismissed) => window.SentinelDetectors.ignoreFindings(dismissed),
         onCancel: () => {
           pendingSend = null;
           logEvent({ stage: "pre_send", text, findings, action: "cancelled", scanStartedAt, attachmentCount });
@@ -631,20 +632,25 @@
   // ---------------------------------------------------------------------
   // Layer 1 warning overlay UI (unchanged)
   // ---------------------------------------------------------------------
-  function showWarningOverlay(findings, { onSanitize, onProceed, onCancel }) {
+  function showWarningOverlay(findings, { onSanitize, onProceed, onNotSensitive, onCancel }) {
     const existing = document.getElementById("sentinel-overlay");
     if (existing) existing.remove();
 
+    const RISK_LABELS = { critical: "Critical", high: "High", medium: "Medium", low: "Low" };
     const riskLevel = window.SentinelDetectors.highestRisk(findings);
-    const riskLabel = { critical: "Critical", high: "High", medium: "Medium", low: "Low" }[riskLevel] || "Low";
+    const riskLabel = RISK_LABELS[riskLevel] || "Low";
     const personalTypes = new Set(["aadhaar", "pan", "phone", "email", "bank_account"]);
     const credentialTypes = new Set(["openai_key", "anthropic_key", "aws_key", "jwt", "db_url", "private_key", "generic_secret", "hardcoded_password"]);
-    const categoryCounts = findings.reduce((counts, finding) => {
+    const countCategories = (list) => list.reduce((counts, finding) => {
       if (personalTypes.has(finding.type)) counts.personal += 1;
       else if (credentialTypes.has(finding.type)) counts.credentials += 1;
       else counts.business += 1;
       return counts;
     }, { personal: 0, credentials: 0, business: 0 });
+    const categoryCounts = countCategories(findings);
+    // Private keywords come from the company, so users can't dismiss them.
+    const canDismiss = (finding) => finding.type !== "company_keyword";
+    const remaining = new Set(findings.keys());
 
     const overlay = document.createElement("div");
     overlay.id = "sentinel-overlay";
@@ -661,7 +667,7 @@
     };
 
     const categoryCard = (kind, label, count, icon) => `
-      <div class="sentinel-category ${kind} ${count ? "is-active" : ""}">
+      <div class="sentinel-category ${kind} ${count ? "is-active" : ""}" data-category="${kind}">
         <span class="sentinel-category-icon">${icon}</span>
         <span class="sentinel-category-label">${label}</span>
         <strong>${count}</strong>
@@ -694,12 +700,13 @@
             ${icons.chevron}<span>View Details</span>
           </button>
           <div id="sentinel-details" class="sentinel-details" hidden>
-            ${findings.map((f) => `
-              <section class="sentinel-detail-item">
+            ${findings.map((f, index) => `
+              <section class="sentinel-detail-item" data-finding="${index}">
                 <span class="sentinel-detail-icon">${icons.id}</span>
                 <h3>${escapeHtml(f.label)}</h3>
                 <div class="sentinel-detail-row"><span class="sentinel-detail-label">Detected:</span><code>${escapeHtml(f.detected || f.match)}</code></div>
                 <div class="sentinel-detail-row"><span class="sentinel-detail-label">Replacement:</span><code class="sentinel-safe-value">${escapeHtml(window.SentinelDetectors.replacementFor(f.type))}</code></div>
+                ${canDismiss(f) ? `<button class="sentinel-not-sensitive" type="button" data-dismiss="${index}">Not sensitive, don't warn again</button>` : ""}
               </section>`).join("")}
           </div>
           <div class="sentinel-safety-note">${icons.shield}<span>Replacing will keep your prompt useful while protecting sensitive data.</span></div>
@@ -707,6 +714,7 @@
             <button id="sentinel-sanitize-btn" class="sentinel-btn sentinel-btn-sanitize">${icons.shield}<span>Replace with Safe Data</span></button>
             <button id="sentinel-proceed-btn" class="sentinel-btn sentinel-btn-proceed">${icons.send}<span>Send Anyway</span></button>
           </div>
+          ${findings.some(canDismiss) ? '<button id="sentinel-dismiss-all-btn" class="sentinel-not-sensitive sentinel-dismiss-all" type="button">Not sensitive? Send and don\'t warn me about these again</button>' : ""}
         </div>
       </section>
     `;
@@ -742,6 +750,43 @@
     document.getElementById("sentinel-proceed-btn").addEventListener("click", () => {
       overlay.remove();
       onProceed();
+    });
+
+    // "Not sensitive": remember the values, drop them from this warning, and
+    // send once nothing is left to warn about.
+    const dismiss = async (indexes) => {
+      try {
+        await onNotSensitive(indexes.map((index) => findings[index]));
+      } catch (error) {
+        console.error("[Preflight.ai] could not save not-sensitive values", error);
+        return;
+      }
+      indexes.forEach((index) => {
+        remaining.delete(index);
+        overlay.querySelector(`[data-finding="${index}"]`)?.remove();
+      });
+      const left = [...remaining].map((index) => findings[index]);
+      if (left.length === 0) {
+        overlay.remove();
+        onProceed("marked_not_sensitive");
+        return;
+      }
+      const counts = countCategories(left);
+      Object.entries(counts).forEach(([kind, count]) => {
+        const card = overlay.querySelector(`[data-category="${kind}"]`);
+        card.classList.toggle("is-active", count > 0);
+        card.querySelector("strong").textContent = String(count);
+      });
+      const level = window.SentinelDetectors.highestRisk(left);
+      overlay.querySelector(".sentinel-modal-header").className = `sentinel-modal-header sentinel-risk-${level}`;
+      overlay.querySelector(".sentinel-risk-badge").lastChild.textContent = RISK_LABELS[level] || "Low";
+      if (!left.some(canDismiss)) overlay.querySelector("#sentinel-dismiss-all-btn")?.remove();
+    };
+    overlay.querySelectorAll("[data-dismiss]").forEach((button) => {
+      button.addEventListener("click", () => dismiss([Number(button.dataset.dismiss)]));
+    });
+    overlay.querySelector("#sentinel-dismiss-all-btn")?.addEventListener("click", () => {
+      dismiss([...remaining].filter((index) => canDismiss(findings[index])));
     });
   }
 

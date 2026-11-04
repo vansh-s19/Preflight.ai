@@ -374,6 +374,20 @@
       line-height: 1.4;
     }
 
+    .checks summary { font-weight: 700; cursor: pointer; }
+    .checks[open] summary { margin-bottom: 10px; }
+    .detector-groups { display: grid; gap: 10px; }
+    .detector-groups h3 {
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .detector-groups .check-row { padding: 2px 0; }
+    .ignored-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+
     button:disabled { opacity: .5; cursor: default; }
   </style>
 </head>
@@ -407,6 +421,15 @@
         <span>Check prompts on <strong id="site-name"></strong></span>
       </label>
     </section>
+
+    <details class="panel checks">
+      <summary>What Preflight checks</summary>
+      <div id="detector-groups" class="detector-groups"></div>
+      <div class="mode-row ignored-row">
+        <p class="local-note"><span id="ignored-count">0</span> values marked "not sensitive"</p>
+        <button id="clear-ignored-btn" type="button" class="link">Clear</button>
+      </div>
+    </details>
 
     <section class="metrics" aria-label="This week">
       <div class="metric"><span>Catches this week</span><strong id="week-catches">0</strong></div>
@@ -505,6 +528,7 @@
 
   <script src="config.js"></script>
   <script src="protection.js"></script>
+  <script src="detectors.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
