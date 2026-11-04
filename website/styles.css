@@ -863,6 +863,8 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 }
 
 @media (max-width: 860px) {
+  /* Sized so "Catch leaks before" always fits on its line. */
+  h1 { font-size: clamp(32px, 10vw, 56px); }
   .hero { padding: 108px 0 64px; }
   .privacy-panel { padding: 72px 0; }
   .hero-grid { grid-template-columns: 1fr; gap: 44px; }
