@@ -5,11 +5,11 @@ Everything needed to fill in the Chrome Web Store developer dashboard for the
 
 ## Before you submit
 
-1. Set `WEBSITE_URL` in `extension/src/config.js` to the live website (it drives
-   the uninstall page, the "See plans" link and the welcome page's privacy link),
-   and make sure `<WEBSITE_URL>privacy.html` and `<WEBSITE_URL>uninstall.html` load.
-2. Set `contactEmail` in `website/config.js` so the support links and uninstall
-   feedback work.
+1. `WEBSITE_URL` in `extension/src/config.js` is `https://preflightai.in/` (it
+   drives the uninstall page, the "See plans" link and the welcome page's privacy
+   link). If the domain changes, update it and rebuild.
+2. `contactEmail` in `website/config.js` is `vanshsaxena1901@gmail.com`; it shows
+   on the privacy policy, Talk to us and the uninstall feedback buttons.
 3. Run the checks in [qa-checklist.md](qa-checklist.md).
 4. Build the package: `node scripts/build.mjs`. Upload `dist/preflight-ai-<version>.zip`.
    Build **without** `PREFLIGHT_API_URL`: the answers below are for a build that
@@ -86,8 +86,8 @@ them is a plain, unbranded stand-in (`src/chat.html`), not ChatGPT or Claude.
 
 | Field | Value |
 |---|---|
-| Official URL / Homepage | `<WEBSITE_URL>` |
-| Support URL | `<WEBSITE_URL>#faq` (or your support email) |
+| Official URL / Homepage | `https://preflightai.in/` |
+| Support URL / email | `vanshsaxena1901@gmail.com` |
 
 ## Privacy practices
 
@@ -123,7 +123,7 @@ the build makes no network requests. Check all three certifications:
 > (message text for AI checks, when the organization's plan includes them) and
 > **User activity** (detection types, actions, timing) to the organization's server.
 
-**Privacy policy URL:** `<WEBSITE_URL>privacy.html`
+**Privacy policy URL:** `https://preflightai.in/privacy.html`
 
 ## Notes for the reviewer
 
