@@ -336,6 +336,15 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 // ---------------------------------------------------------------------
+// First run: show the welcome page once (not on updates). On uninstall,
+// Chrome opens the website's feedback page; no data is attached to the URL.
+// ---------------------------------------------------------------------
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === "install") chrome.tabs.create({ url: chrome.runtime.getURL("src/welcome.html") });
+});
+if (PREFLIGHT_CONFIG.WEBSITE_URL) chrome.runtime.setUninstallURL(`${PREFLIGHT_CONFIG.WEBSITE_URL}uninstall.html`);
+
+// ---------------------------------------------------------------------
 // Toolbar badge: "OFF" while protection is switched off or paused. An
 // alarm clears it when a pause runs out; the content script checks the
 // pause end time itself, so protection resumes even if the alarm is late.

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preflight.ai</title>
+  <meta name="description" content="Preflight.ai has been removed from Chrome." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libertinus+Serif:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=dev" />
+  <style>
+    .farewell { padding: 72px 0 96px; }
+    .farewell h1 { margin-top: 0; font-size: clamp(40px, 6vw, 60px); }
+    .farewell .lead { margin-top: 16px; color: var(--ink-soft); font-size: 18px; }
+    .farewell h2 { margin: 48px 0 12px; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+    .farewell p { color: var(--ink-soft); }
+    .reasons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .reasons .btn { min-height: 44px; font-size: 15px; }
+    .farewell .actions { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 12px; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="28" fill="#FB0102" />
+      <path d="M20 41H54L70 24V41H110V84H64V100L48 84H20Z" fill="#fff" />
+      <path d="M31 50.5H84M48 64H100M31 76.5H84" stroke="#8C8C8C" stroke-width="5" stroke-linecap="round" />
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  </svg>
+
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html" aria-label="Preflight.ai home">
+        <svg class="brand-mark" aria-hidden="true"><use href="#logo" /></svg>
+        <span>Preflight</span>
+      </a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="index.html#how">How it works</a>
+        <a href="index.html#faq">FAQ</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="farewell">
+    <div class="container container-narrow">
+      <h1>Preflight has been removed</h1>
+      <p class="lead">Thanks for trying it. Uninstalling deleted your settings and history from this browser, so nothing is left behind.</p>
+
+      <section data-feedback-section hidden>
+        <h2>What made you leave?</h2>
+        <p>Pick one to send us a short email. It helps us decide what to fix next.</p>
+        <div class="reasons">
+          <a class="btn btn-light" data-feedback="Too many warnings" href="#">Too many warnings</a>
+          <a class="btn btn-light" data-feedback="It missed something sensitive" href="#">It missed something</a>
+          <a class="btn btn-light" data-feedback="It slowed down or broke ChatGPT or Claude" href="#">It broke a site</a>
+          <a class="btn btn-light" data-feedback="I need it on another AI tool" href="#">I need another AI tool</a>
+          <a class="btn btn-light" data-feedback="Something else" href="#">Something else</a>
+        </div>
+      </section>
+
+      <div class="actions">
+        <a class="btn btn-dark" data-install href="#">
+          <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
+          <span data-install-label>Reinstall Preflight</span>
+        </a>
+        <a class="btn btn-light" href="index.html">Back to home</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <a class="brand" href="index.html" aria-label="Preflight.ai home">
+        <svg class="brand-mark" aria-hidden="true"><use href="#logo" /></svg>
+        <span>Preflight</span>
+      </a>
+      <p class="footer-legal">© <span data-year>2026</span> Preflight.ai · Built by Vansh Saxena.</p>
+    </div>
+  </footer>
+
+  <script src="config.js?v=dev"></script>
+  <script src="main.js?v=dev"></script>
+</body>
+</html>

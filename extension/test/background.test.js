@@ -16,12 +16,17 @@ function loadBackground(apiBaseUrl) {
   const sessionStore = {};
   const tabRemovedListeners = [];
   const injected = [];
+  const installedListeners = [];
+  const lifecycle = { uninstallUrl: null, openedTabs: [] };
 
   const chrome = {
     runtime: {
       id: "test-extension",
       getManifest: () => ({ version: "1.0.0" }),
       onMessage: { addListener: (fn) => { onMessage = fn; } },
+      onInstalled: { addListener: (fn) => { installedListeners.push(fn); } },
+      setUninstallURL: (url) => { lifecycle.uninstallUrl = url; },
+      getURL: (path) => `chrome-extension://test-extension/${path}`,
     },
     storage: {
       local: {
@@ -51,7 +56,10 @@ function loadBackground(apiBaseUrl) {
     scripting: {
       executeScript: async (options) => { injected.push(options); },
     },
-    tabs: { onRemoved: { addListener: (fn) => { tabRemovedListeners.push(fn); } } },
+    tabs: {
+      onRemoved: { addListener: (fn) => { tabRemovedListeners.push(fn); } },
+      create: ({ url }) => { lifecycle.openedTabs.push(url); },
+    },
     alarms: {
       get: async () => null,
       create: () => {},
@@ -90,7 +98,7 @@ function loadBackground(apiBaseUrl) {
     });
   }
 
-  return { store, sessionStore, fetchCalls, send, badge, setStorage: chrome.storage.local.set, tabRemovedListeners, injected };
+  return { store, sessionStore, fetchCalls, send, badge, setStorage: chrome.storage.local.set, tabRemovedListeners, injected, installedListeners, lifecycle };
 }
 
 const scanEvent = {
@@ -220,6 +228,16 @@ const scanEvent = {
     const noTab = await bg.send({ type: "PREFLIGHT_LOAD_PARSER", parser: "docx" }, { id: "test-extension" });
     assert.equal(noTab.success, false, "requests from outside a tab are rejected");
     assert.equal(bg.injected.length, 1);
+  }
+
+  // Welcome page on first install only; uninstall page on the website.
+  {
+    const bg = loadBackground("");
+    assert.equal(bg.lifecycle.uninstallUrl, "https://vansh-s19.github.io/Preflight.ai/uninstall.html");
+    bg.installedListeners.forEach((fn) => fn({ reason: "update" }));
+    assert.deepEqual(bg.lifecycle.openedTabs, [], "updates don't reopen the welcome page");
+    bg.installedListeners.forEach((fn) => fn({ reason: "install" }));
+    assert.deepEqual(bg.lifecycle.openedTabs, ["chrome-extension://test-extension/src/welcome.html"]);
   }
 
   console.log("background: all tests passed");

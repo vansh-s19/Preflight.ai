@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Welcome to Preflight.ai</title>
+  <link rel="icon" type="image/png" href="../icons/icon32.png" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #647084;
+      --line: #d9dee8;
+      --panel: #ffffff;
+      --surface: #f5f7fb;
+      --accent: #0f766e;
+      --accent-tint: #e6f4f1;
+      --info: #2563eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(760px, 100% - 32px);
+      margin: 0 auto;
+      padding: 56px 0 64px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    .hero { display: flex; align-items: center; gap: 18px; }
+    .hero img { width: 64px; height: 64px; flex: none; }
+    h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; }
+    .lead { margin-top: 6px; color: var(--muted); font-size: 16px; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .card h2 { font-size: 15px; margin-bottom: 6px; }
+    .card p { color: var(--muted); font-size: 14px; }
+
+    .panel { margin-top: 12px; display: grid; gap: 12px; }
+    .panel h2 { font-size: 17px; }
+    .panel p { color: var(--muted); }
+
+    .sample {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px dashed var(--line);
+    }
+    .sample code { flex: 1; font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+
+    .row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    button, .button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 650;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    button:hover, .button:hover { border-color: #aab4c5; }
+    .button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .button.primary:hover { background: #0b5f59; }
+    button:focus-visible, .button:focus-visible, a:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.3); outline-offset: 2px; }
+
+    ol { margin: 0; padding-left: 20px; color: var(--muted); display: grid; gap: 4px; }
+
+    .note {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .note a { color: var(--info); }
+
+    @media (max-width: 640px) {
+      main { padding-top: 32px; }
+      .cards { grid-template-columns: 1fr; }
+      .hero { align-items: flex-start; }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <img src="../icons/icon128.png" alt="" />
+      <div>
+        <h1>Preflight.ai is on</h1>
+        <p class="lead">It checks what you're about to send to ChatGPT and Claude, and warns you before personal data or secrets go out.</p>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="How Preflight works">
+      <div class="card">
+        <h2>What it checks</h2>
+        <p>Aadhaar, PAN, GSTIN and bank details, phone numbers and emails, API keys, passwords, and PDF, Word and text attachments.</p>
+      </div>
+      <div class="card">
+        <h2>Stays on your device</h2>
+        <p>Every check runs in your browser. Nothing you type is sent to Preflight or anyone else.</p>
+      </div>
+      <div class="card">
+        <h2>You decide</h2>
+        <p>A warning never blocks you. Replace the data with safe placeholders, send anyway, or go back and edit.</p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="try-title">
+      <h2 id="try-title">Try it</h2>
+      <p>Copy this made-up example, paste it into a chat and press send. Preflight will stop it before it leaves.</p>
+      <div class="sample">
+        <code id="sample-text">My PAN is ABCDE1234F, call me on +91 9876543210</code>
+        <button id="copy-btn" type="button">Copy</button>
+      </div>
+      <div class="row">
+        <a class="button primary" href="https://chatgpt.com/" target="_blank" rel="noopener">Open ChatGPT</a>
+        <a class="button" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude</a>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="pin-title">
+      <h2 id="pin-title">Keep it in reach</h2>
+      <ol>
+        <li>Click the puzzle-piece icon at the top right of Chrome.</li>
+        <li>Click the pin next to Preflight.ai.</li>
+        <li>Click the Preflight icon any time to pause it, turn it off for a site, or choose what it checks.</li>
+      </ol>
+    </section>
+
+    <p class="note">
+      Preflight is a safety net, not a guarantee. It catches the common mistakes, so still take a look before you paste.
+      <a id="privacy-link" href="#" target="_blank" rel="noopener" hidden>Privacy policy</a>
+    </p>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="welcome.js"></script>
+</body>
+</html>
