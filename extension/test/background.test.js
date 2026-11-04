@@ -15,6 +15,7 @@ function loadBackground(apiBaseUrl) {
   const badge = { text: "", tabs: {} };
   const sessionStore = {};
   const tabRemovedListeners = [];
+  const injected = [];
 
   const chrome = {
     runtime: {
@@ -46,6 +47,9 @@ function loadBackground(apiBaseUrl) {
       },
       setBadgeBackgroundColor: async () => {},
       setTitle: async () => {},
+    },
+    scripting: {
+      executeScript: async (options) => { injected.push(options); },
     },
     tabs: { onRemoved: { addListener: (fn) => { tabRemovedListeners.push(fn); } } },
     alarms: {
@@ -86,7 +90,7 @@ function loadBackground(apiBaseUrl) {
     });
   }
 
-  return { store, sessionStore, fetchCalls, send, badge, setStorage: chrome.storage.local.set, tabRemovedListeners };
+  return { store, sessionStore, fetchCalls, send, badge, setStorage: chrome.storage.local.set, tabRemovedListeners, injected };
 }
 
 const scanEvent = {
@@ -196,6 +200,26 @@ const scanEvent = {
     await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "broken" }, tab);
     await bg.tabRemovedListeners[0](7);
     assert.equal("7" in bg.sessionStore.tabHealth, false, "closed tabs are forgotten");
+  }
+
+  // Attachment parsers are injected on request, only from the allowlist.
+  {
+    const bg = loadBackground("");
+    const frame = { id: "test-extension", tab: { id: 4 }, frameId: 0 };
+    const ok = await bg.send({ type: "PREFLIGHT_LOAD_PARSER", parser: "pdf" }, frame);
+    assert.equal(ok.success, true);
+    assert.deepEqual(JSON.parse(JSON.stringify(bg.injected[0])), {
+      target: { tabId: 4, frameIds: [0] },
+      files: ["src/vendor/pdf.min.js"],
+    });
+
+    for (const parser of ["../../evil.js", "constructor", "toString"]) {
+      const bad = await bg.send({ type: "PREFLIGHT_LOAD_PARSER", parser }, frame);
+      assert.equal(bad.success, false, `parser "${parser}" is rejected`);
+    }
+    const noTab = await bg.send({ type: "PREFLIGHT_LOAD_PARSER", parser: "docx" }, { id: "test-extension" });
+    assert.equal(noTab.success, false, "requests from outside a tab are rejected");
+    assert.equal(bg.injected.length, 1);
   }
 
   console.log("background: all tests passed");

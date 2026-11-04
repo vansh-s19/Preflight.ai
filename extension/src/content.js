@@ -113,6 +113,9 @@
         pendingAttachments.push(file);
       }
     });
+    if (window.PreflightFileScanner && PreflightProtection.isActive(protection, location.hostname)) {
+      window.PreflightFileScanner.preload(fileList);
+    }
   }
 
   // ---------------------------------------------------------------------

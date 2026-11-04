@@ -34,9 +34,12 @@ Output: `dist/extension/` (load unpacked from `chrome://extensions`) and
 ```bash
 node extension/test/detectors.test.js
 node extension/test/background.test.js
+node extension/test/fileScanner.test.js
 ```
 
 ## Third-party code
 
 `src/vendor/` bundles pdf.js 3.11.174 (Apache-2.0) and mammoth 1.8.0
 (BSD-2-Clause) for reading PDF/DOCX attachments locally. Licenses sit alongside.
+They aren't content scripts: the background worker injects each one into the
+page's extension context the first time a file of that type is attached.

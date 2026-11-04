@@ -28,6 +28,7 @@ The privacy policy URL for the store listing is `<your-domain>/privacy.html`.
 node scripts/build.mjs
 node extension/test/detectors.test.js
 node extension/test/background.test.js
+node extension/test/fileScanner.test.js
 ```
 
 ## Backend

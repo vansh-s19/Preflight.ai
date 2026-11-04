@@ -240,7 +240,32 @@ const HANDLERS = {
   PREFLIGHT_CONNECT: (message) => connectAccount(message.token),
   PREFLIGHT_DISCONNECT: () => disconnectAccount(),
   PREFLIGHT_SITE_HEALTH: (message, sender) => setTabHealth(sender.tab?.id, message.status),
+  PREFLIGHT_LOAD_PARSER: (message, sender) => loadParser(message.parser, sender),
 };
+
+// ---------------------------------------------------------------------
+// Attachment parsers, injected into the asking frame's content-script
+// world on first use instead of loading on every page (see fileScanner.js).
+// ---------------------------------------------------------------------
+const PARSER_FILES = {
+  pdf: "src/vendor/pdf.min.js",
+  docx: "src/vendor/mammoth.browser.min.js",
+};
+
+async function loadParser(parser, sender) {
+  const file = Object.hasOwn(PARSER_FILES, parser) ? PARSER_FILES[parser] : null;
+  const tabId = sender.tab?.id;
+  if (!file || !Number.isInteger(tabId)) return { success: false, error: "invalid_request" };
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId, frameIds: [sender.frameId ?? 0] },
+      files: [file],
+    });
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err?.message || "inject_failed" };
+  }
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Only accept messages from this extension's own pages and content scripts.

@@ -7,7 +7,13 @@
   "permissions": [
     "storage",
     "alarms",
-    "activeTab"
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://claude.ai/*"
   ],
   "background": {
     "service_worker": "src/background.js"
@@ -20,20 +26,22 @@
         "https://claude.ai/*"
       ],
       "js": [
-        "src/vendor/pdf.min.js",
-        "src/vendor/mammoth.browser.min.js",
         "src/protection.js",
         "src/fileScanner.js",
         "src/detectors.js",
         "src/content.js"
       ],
-      "css": ["src/warning.css"],
+      "css": [
+        "src/warning.css"
+      ],
       "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["src/vendor/pdf.worker.min.js"],
+      "resources": [
+        "src/vendor/pdf.worker.min.js"
+      ],
       "matches": [
         "https://chatgpt.com/*",
         "https://chat.openai.com/*",
