@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Chat</title>
+  <!--
+    A plain, unbranded chat page for store screenshots. The warning is the
+    real one: content.js intercepts the send below exactly as it does on
+    ChatGPT and Claude. ?state=warning | details | replaced
+  -->
+  <link rel="stylesheet" href="../../extension/src/warning.css" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      background: #fff;
+      color: #1f2937;
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    aside { padding: 20px 14px; background: #f4f5f7; border-right: 1px solid #e5e7eb; }
+    aside .new {
+      padding: 9px 12px;
+      border: 1px solid #d9dce2;
+      border-radius: 10px;
+      background: #fff;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    aside h4 { margin: 22px 8px 8px; color: #8a909b; font-size: 12px; font-weight: 600; }
+    aside p { margin: 0; padding: 7px 8px; border-radius: 8px; color: #3b4250; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    aside p.active { background: #e6e8ec; }
+    main { display: grid; grid-template-rows: 1fr auto; min-width: 0; }
+    .thread { padding: 40px 0 0; overflow: hidden; }
+    .msg { width: min(720px, 100% - 64px); margin: 0 auto 26px; }
+    .msg.user { display: flex; justify-content: flex-end; }
+    .msg.user span { max-width: 75%; padding: 10px 16px; border-radius: 18px; background: #f0f1f4; }
+    .msg.bot b { display: block; margin-bottom: 4px; font-size: 13px; color: #6b7280; }
+    form {
+      width: min(760px, 100% - 64px);
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 12px 12px 12px 18px;
+      border: 1px solid #d9dce2;
+      border-radius: 22px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+    }
+    textarea {
+      flex: 1;
+      height: 76px;
+      border: 0;
+      outline: 0;
+      resize: none;
+      font: inherit;
+      color: inherit;
+    }
+    .send {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 50%;
+      background: #1f2937;
+      color: #fff;
+      font-size: 18px;
+    }
+    body.replaced textarea { color: #047857; }
+  </style>
+</head>
+<body>
+  <aside>
+    <div class="new">+ New chat</div>
+    <h4>Today</h4>
+    <p class="active">Loan reminder email</p>
+    <p>Quarterly summary outline</p>
+    <h4>Yesterday</h4>
+    <p>Fix SQL query timeout</p>
+    <p>Trip packing list</p>
+  </aside>
+  <main>
+    <div class="thread">
+      <div class="msg user"><span>Can you help me write short, polite payment reminders?</span></div>
+      <div class="msg bot"><b>Assistant</b>Of course. Share the customer's details and the amount due, and I'll draft a friendly reminder you can send.</div>
+    </div>
+    <form onsubmit="return false">
+      <textarea id="prompt-textarea">Draft a reminder for Rahul Mehta about his overdue loan. PAN: ABCDE1234F, account number 1234567890123456, phone +91 9876543210.</textarea>
+      <button class="send" type="button" data-testid="send-button" aria-label="Send prompt">↑</button>
+    </form>
+  </main>
+
+  <script src="chrome-stub.js"></script>
+  <script src="../../extension/src/protection.js"></script>
+  <script src="../../extension/src/detectors.js"></script>
+  <script src="../../extension/src/content.js"></script>
+  <script>
+    const state = new URLSearchParams(location.search).get("state") || "warning";
+    document.querySelector("[data-testid=send-button]").click();
+    const waitFor = (selector) => new Promise((resolve) => {
+      const timer = setInterval(() => {
+        const node = document.querySelector(selector);
+        if (node) { clearInterval(timer); resolve(node); }
+      }, 20);
+    });
+    waitFor("#sentinel-overlay").then(() => {
+      document.activeElement.blur();
+      if (state === "details") document.getElementById("sentinel-details-btn").click();
+      if (state === "replaced") {
+        document.getElementById("sentinel-sanitize-btn").click();
+        document.body.classList.add("replaced");
+      }
+    });
+  </script>
+</body>
+</html>

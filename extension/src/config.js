@@ -12,4 +12,6 @@ const PREFLIGHT_CONFIG = Object.freeze({
   API_BASE_URL: "", // @build:PREFLIGHT_API_URL
   DASHBOARD_URL: "", // @build:PREFLIGHT_DASHBOARD_URL
   LAYER2_TIMEOUT_MS: 1500,
+  // Marketing site; the popup links to its #plans section.
+  WEBSITE_URL: "https://vansh-s19.github.io/Preflight.ai/",
 });

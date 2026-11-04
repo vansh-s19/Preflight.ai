@@ -11,7 +11,7 @@
  *    scan metadata are sent to PREFLIGHT_CONFIG.API_BASE_URL.
  */
 
-importScripts("config.js");
+importScripts("config.js", "protection.js");
 
 const DASHBOARD_EVENTS_KEY = "dashboardEvents";
 const PENDING_TELEMETRY_KEY = "pendingTelemetryEvents";
@@ -239,14 +239,40 @@ const HANDLERS = {
   }),
   PREFLIGHT_CONNECT: (message) => connectAccount(message.token),
   PREFLIGHT_DISCONNECT: () => disconnectAccount(),
+  PREFLIGHT_SITE_HEALTH: (message, sender) => setTabHealth(sender.tab?.id, message.status),
+  PREFLIGHT_LOAD_PARSER: (message, sender) => loadParser(message.parser, sender),
 };
+
+// ---------------------------------------------------------------------
+// Attachment parsers, injected into the asking frame's content-script
+// world on first use instead of loading on every page (see fileScanner.js).
+// ---------------------------------------------------------------------
+const PARSER_FILES = {
+  pdf: "src/vendor/pdf.min.js",
+  docx: "src/vendor/mammoth.browser.min.js",
+};
+
+async function loadParser(parser, sender) {
+  const file = Object.hasOwn(PARSER_FILES, parser) ? PARSER_FILES[parser] : null;
+  const tabId = sender.tab?.id;
+  if (!file || !Number.isInteger(tabId)) return { success: false, error: "invalid_request" };
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId, frameIds: [sender.frameId ?? 0] },
+      files: [file],
+    });
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err?.message || "inject_failed" };
+  }
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Only accept messages from this extension's own pages and content scripts.
   if (sender.id !== chrome.runtime.id) return false;
   const handler = HANDLERS[message?.type];
   if (!handler) return false;
-  handler(message)
+  handler(message, sender)
     .then((result) => sendResponse(result))
     .catch((err) => sendResponse({ success: false, error: err?.message || "handler_error" }));
   // Keep the channel open for the async response.
@@ -306,4 +332,72 @@ chrome.alarms.get(FLUSH_ALARM).then((existing) => {
 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === FLUSH_ALARM) flushTelemetryQueue();
+  if (alarm.name === RESUME_ALARM) updateBadge();
+});
+
+// ---------------------------------------------------------------------
+// First run: show the welcome page once (not on updates). On uninstall,
+// Chrome opens the website's feedback page; no data is attached to the URL.
+// ---------------------------------------------------------------------
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === "install") chrome.tabs.create({ url: chrome.runtime.getURL("src/welcome.html") });
+});
+if (PREFLIGHT_CONFIG.WEBSITE_URL) chrome.runtime.setUninstallURL(`${PREFLIGHT_CONFIG.WEBSITE_URL}uninstall.html`);
+
+// ---------------------------------------------------------------------
+// Toolbar badge: "OFF" while protection is switched off or paused. An
+// alarm clears it when a pause runs out; the content script checks the
+// pause end time itself, so protection resumes even if the alarm is late.
+// ---------------------------------------------------------------------
+const RESUME_ALARM = "preflight-resume";
+
+async function updateBadge() {
+  const { [PreflightProtection.KEY]: stored } = await chrome.storage.local.get([PreflightProtection.KEY]);
+  const settings = PreflightProtection.normalize(stored);
+  const paused = settings.enabled && PreflightProtection.isPaused(settings);
+  const off = !settings.enabled || paused;
+
+  await chrome.action.setBadgeText({ text: off ? "OFF" : "" });
+  if (off) await chrome.action.setBadgeBackgroundColor({ color: "#647084" });
+  if (paused) chrome.alarms.create(RESUME_ALARM, { when: settings.pausedUntil });
+  else chrome.alarms.clear(RESUME_ALARM);
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes[PreflightProtection.KEY]) updateBadge();
+});
+updateBadge();
+
+// ---------------------------------------------------------------------
+// Per-tab warning when the content script can't find the site's composer
+// (see checkHealth in content.js). A tab's badge overrides the global one;
+// null hands the tab back to the global "OFF"/blank badge. Statuses are
+// kept in session storage so the popup can explain the warning.
+// ---------------------------------------------------------------------
+const TAB_HEALTH_KEY = "tabHealth";
+const HEALTH_STATUSES = new Set(["ok", "broken", "unknown"]);
+
+async function setTabHealth(tabId, status) {
+  if (!Number.isInteger(tabId) || !HEALTH_STATUSES.has(status)) return { success: false, error: "invalid_request" };
+  const broken = status === "broken";
+
+  await chrome.action.setBadgeText({ tabId, text: broken ? "!" : null });
+  if (broken) await chrome.action.setBadgeBackgroundColor({ tabId, color: "#c2410c" });
+  await chrome.action.setTitle({
+    tabId,
+    title: broken ? "Preflight.ai: can't find the message box on this page. Checks may not run." : "Preflight.ai",
+  });
+
+  const { [TAB_HEALTH_KEY]: health = {} } = await chrome.storage.session.get([TAB_HEALTH_KEY]);
+  if (broken) health[tabId] = status;
+  else delete health[tabId];
+  await chrome.storage.session.set({ [TAB_HEALTH_KEY]: health });
+  return { success: true };
+}
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const { [TAB_HEALTH_KEY]: health = {} } = await chrome.storage.session.get([TAB_HEALTH_KEY]);
+  if (!(tabId in health)) return;
+  delete health[tabId];
+  await chrome.storage.session.set({ [TAB_HEALTH_KEY]: health });
 });

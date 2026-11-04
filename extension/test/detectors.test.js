@@ -1,7 +1,12 @@
 const assert = require("node:assert/strict");
 
 global.window = {};
-global.chrome = { storage: { local: { get: (_keys, cb) => cb({ companyKeywords: ["Project Falcon"] }) } } };
+// Private keywords only apply while a company account is connected.
+const storage = { companyKeywords: ["Project Falcon"], account: { token: "t" } };
+global.chrome = { storage: { local: {
+  get: (_keys, cb) => cb(storage),
+  set: async (values) => { Object.assign(storage, JSON.parse(JSON.stringify(values))); },
+} } };
 require("../src/detectors.js");
 
 async function expectType(text, type) {
@@ -19,6 +24,10 @@ async function expectType(text, type) {
   await expectType("password = 'correct-horse-123'", "hardcoded_password");
   await expectType("Please review payroll.xlsx", "file_reference");
   await expectType("Project Falcon launch notes", "company_keyword");
+  delete storage.account;
+  const freeFindings = await window.SentinelDetectors.scan("Project Falcon launch notes");
+  assert(!freeFindings.some((finding) => finding.type === "company_keyword"), "keywords are ignored without a company account");
+  storage.account = { token: "t" };
   await expectType("const customerSecret = fetchSecret();", "source_code");
 
   const gstFindings = await window.SentinelDetectors.scan("27ABCDE1234F1Z5");
@@ -82,6 +91,38 @@ async function expectType(text, type) {
     !invalidMobileFindings.some((finding) => finding.type === "phone"),
     "10-digit numbers not starting with 6-9 must not be flagged as Indian mobile numbers"
   );
+
+  // Regression: replacing a bank account keeps its "account number" label.
+  assert.equal(
+    await window.SentinelDetectors.sanitize("Pay to account number 1234567890123456 today"),
+    "Pay to account number [SYNTHETIC_BANK_ACCOUNT] today"
+  );
+
+  // User filters: switched-off detector types and "not sensitive" values.
+  {
+    const text = "PAN ABCDE1234F, mail me at a@b.co";
+    storage.detectorPrefs = { disabledTypes: ["email"] };
+    let types = (await window.SentinelDetectors.scan(text)).map((finding) => finding.type);
+    assert.deepEqual(types, ["pan"], "switched-off detectors are skipped");
+    let safe = await window.SentinelDetectors.sanitize(text);
+    assert(safe.includes("a@b.co") && !safe.includes("ABCDE1234F"), "sanitize leaves switched-off types alone");
+
+    delete storage.detectorPrefs;
+    const findings = await window.SentinelDetectors.scan(text);
+    await window.SentinelDetectors.ignoreFindings(findings.filter((finding) => finding.type === "pan"));
+    assert(!JSON.stringify(storage.detectorPrefs).includes("ABCDE1234F"), "ignored values are stored only as hashes");
+    types = (await window.SentinelDetectors.scan("pan: abcde1234f")).map((finding) => finding.type);
+    assert.deepEqual(types, [], "an ignored value is not flagged again, whatever its case");
+    types = (await window.SentinelDetectors.scan("PAN ZZZZZ9999Z")).map((finding) => finding.type);
+    assert.deepEqual(types, ["pan"], "other values of the same type are still flagged");
+    safe = await window.SentinelDetectors.sanitize(text);
+    assert(safe.includes("ABCDE1234F") && !safe.includes("a@b.co"), "sanitize leaves ignored values alone");
+
+    const bank = "Account Number: 1234567890123456";
+    await window.SentinelDetectors.ignoreFindings(await window.SentinelDetectors.scan(bank));
+    assert.equal(await window.SentinelDetectors.sanitize(bank), bank, "ignored captured values survive sanitize");
+    delete storage.detectorPrefs;
+  }
 
   console.log("detectors: all tests passed");
 })().catch((error) => { console.error(error); process.exitCode = 1; });

@@ -33,6 +33,17 @@
     }
   });
 
+  // Uninstall page: each reason opens a pre-filled email. Without a
+  // contact address the whole question stays hidden.
+  document.querySelectorAll("[data-feedback-section]").forEach((section) => {
+    section.hidden = !site.contactEmail;
+  });
+  document.querySelectorAll("[data-feedback]").forEach((link) => {
+    if (!site.contactEmail) return;
+    const subject = `Preflight uninstall: ${link.getAttribute("data-feedback")}`;
+    link.href = `mailto:${site.contactEmail}?subject=${encodeURIComponent(subject)}`;
+  });
+
   const nav = document.querySelector(".nav");
   if (nav) {
     const update = () => nav.classList.toggle("is-scrolled", window.scrollY > 8);

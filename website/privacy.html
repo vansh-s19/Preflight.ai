@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Privacy Policy · Preflight.ai</title>
-  <meta name="description" content="How the Preflight.ai Chrome extension handles your data. Personal mode runs entirely on your device." />
+  <meta name="description" content="How the Preflight.ai Chrome extension handles your data. The free plan runs entirely on your device." />
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icon32.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -67,10 +67,10 @@
       <div class="summary">
         <p>The short version:</p>
         <ul>
-          <li>On the free Personal plan, everything happens on your device. Nothing you type is sent to us or anyone else.</li>
+          <li>On the Free plan, everything happens on your device. Nothing you type is sent to us or anyone else.</li>
           <li>We never store the text of your prompts. Local history keeps only what type of data was caught and when.</li>
           <li>We don't sell data, show ads, or use analytics or tracking.</li>
-          <li>Business mode only starts if you enter an access token from your employer, and then sends only what's described below.</li>
+          <li>Enterprise mode only starts if you enter an access token from your employer, and then sends only what's described below.</li>
         </ul>
       </div>
 
@@ -85,18 +85,24 @@
       </ul>
       <p>It does not read your past conversations, other tabs, other websites, your browsing history, or anything else on your computer.</p>
 
-      <h2>Personal mode (default)</h2>
-      <p>All checks run inside your browser. In Personal mode the extension makes no network requests of its own, so nothing is sent to us or any third party.</p>
+      <h2>Free plan (default)</h2>
+      <p>All checks run inside your browser. On the Free plan the extension makes no network requests of its own, so nothing is sent to us or any third party.</p>
       <h3>Stored on your device</h3>
       <p>Using Chrome's local extension storage, Preflight keeps:</p>
       <ul>
         <li><strong>Scan history</strong> (up to the last 500 checks): time, which AI site, the type of data detected (for example "PAN Number"), its risk level, what you chose (replace, send anyway, cancel) and the length of the message. It never includes the message text or the values that were detected.</li>
-        <li><strong>Your private keywords</strong>, if you add any in the popup.</li>
+        <li><strong>Your settings</strong>: whether Preflight is on, when a pause ends, the sites you switched it off on, and the checks you turned off.</li>
+        <li><strong>Values you marked "not sensitive"</strong>, stored only as a one-way fingerprint (a SHA-256 hash). The value itself is never stored, and the fingerprint can't be turned back into it.</li>
+        <li><strong>Private keywords</strong> (Enterprise only), if your company account is connected.</li>
+        <li><strong>Page status</strong>: for each open ChatGPT or Claude tab, whether Preflight could find the message box. This is kept only until the tab closes or Chrome restarts.</li>
       </ul>
-      <p>You can export or clear the history from the popup at any time. Uninstalling the extension deletes all of it.</p>
+      <p>You can clear the history from the popup at any time, and Enterprise users can also export it. Uninstalling the extension deletes all of it.</p>
 
-      <h2>Business mode (optional)</h2>
-      <p>Business mode is only used if your organization gives you an access token and you enter it in the popup. Your organization's Preflight server then receives data from your browser. Your employer decides how that data is used, under its own policies.</p>
+      <h3>Welcome and uninstall pages</h3>
+      <p>When you first install Preflight it opens a welcome page that ships inside the extension. When you uninstall it, Chrome opens a page on our website. Nothing about you or your use of Preflight is added to that link. If you pick a reason on that page, it opens an email in your own mail app, which you can choose to send. Our website is hosted on GitHub Pages, which may keep standard server logs such as IP addresses.</p>
+
+      <h2>Enterprise (optional)</h2>
+      <p>Enterprise mode is only used if your organization gives you an access token and you enter it in the popup. Your organization's Preflight server then receives data from your browser. Your employer decides how that data is used, under its own policies.</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>What is sent</th><th>When</th></tr></thead>
@@ -117,13 +123,15 @@
         </table>
       </div>
       <p>The Preflight server is built so that message text sent for AI checks is classified in memory and is not logged or stored. Scan metadata never includes message text, previews, page titles or the detected values. Admins see counts and types of detections, not what anyone typed.</p>
-      <p>You can disconnect business mode at any time from the popup. This removes the token and any unsent metadata from your device.</p>
+      <p>You can disconnect your company account at any time from the popup. This removes the token and any unsent metadata from your device.</p>
 
       <h2>Permissions we ask for</h2>
       <ul>
         <li><strong>Access to chatgpt.com, chat.openai.com and claude.ai</strong>: to check messages before they are sent.</li>
-        <li><strong>Storage</strong>: to keep your settings, keywords and local history on your device.</li>
-        <li><strong>Alarms</strong>: in business mode, to retry sending metadata that couldn't be delivered while offline.</li>
+        <li><strong>Scripting</strong>: to add the PDF and Word readers, which ship inside the extension, to those sites only when you attach such a file.</li>
+        <li><strong>Active tab</strong>: when you open the Preflight popup, to see which of those sites you're on so you can switch Preflight off there.</li>
+        <li><strong>Storage</strong>: to keep your settings, local history and, on Enterprise, keywords on your device.</li>
+        <li><strong>Alarms</strong>: to clear the "OFF" badge when a pause ends and, on Enterprise, to retry sending metadata that couldn't be delivered while offline.</li>
       </ul>
 
       <h2>What we never do</h2>

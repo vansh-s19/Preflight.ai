@@ -11,23 +11,59 @@ function loadBackground(apiBaseUrl) {
   const store = {};
   const fetchCalls = [];
   let onMessage = null;
+  const storageListeners = [];
+  const badge = { text: "", tabs: {} };
+  const sessionStore = {};
+  const tabRemovedListeners = [];
+  const injected = [];
+  const installedListeners = [];
+  const lifecycle = { uninstallUrl: null, openedTabs: [] };
 
   const chrome = {
     runtime: {
       id: "test-extension",
       getManifest: () => ({ version: "1.0.0" }),
       onMessage: { addListener: (fn) => { onMessage = fn; } },
+      onInstalled: { addListener: (fn) => { installedListeners.push(fn); } },
+      setUninstallURL: (url) => { lifecycle.uninstallUrl = url; },
+      getURL: (path) => `chrome-extension://test-extension/${path}`,
     },
     storage: {
       local: {
         get: async (keys) => Object.fromEntries(keys.filter((k) => k in store).map((k) => [k, store[k]])),
-        set: async (values) => { Object.assign(store, JSON.parse(JSON.stringify(values))); },
+        set: async (values) => {
+          const copy = JSON.parse(JSON.stringify(values));
+          Object.assign(store, copy);
+          const changes = Object.fromEntries(Object.entries(copy).map(([k, v]) => [k, { newValue: v }]));
+          storageListeners.forEach((fn) => fn(changes, "local"));
+        },
         remove: async (keys) => { keys.forEach((k) => delete store[k]); },
       },
+      session: {
+        get: async (keys) => Object.fromEntries(keys.filter((k) => k in sessionStore).map((k) => [k, sessionStore[k]])),
+        set: async (values) => { Object.assign(sessionStore, JSON.parse(JSON.stringify(values))); },
+      },
+      onChanged: { addListener: (fn) => storageListeners.push(fn) },
+    },
+    action: {
+      setBadgeText: async ({ tabId, text }) => {
+        if (tabId === undefined) badge.text = text;
+        else badge.tabs[tabId] = text;
+      },
+      setBadgeBackgroundColor: async () => {},
+      setTitle: async () => {},
+    },
+    scripting: {
+      executeScript: async (options) => { injected.push(options); },
+    },
+    tabs: {
+      onRemoved: { addListener: (fn) => { tabRemovedListeners.push(fn); } },
+      create: ({ url }) => { lifecycle.openedTabs.push(url); },
     },
     alarms: {
       get: async () => null,
       create: () => {},
+      clear: () => {},
       onAlarm: { addListener: () => {} },
     },
   };
@@ -44,13 +80,14 @@ function loadBackground(apiBaseUrl) {
     return { ok: true, status: 200, json: async () => ({}) };
   }
 
+  const protection = readFileSync(join(srcDir, "protection.js"), "utf8");
   const config = readFileSync(join(srcDir, "config.js"), "utf8")
     .replace(/API_BASE_URL: "[^"]*"/, `API_BASE_URL: ${JSON.stringify(apiBaseUrl)}`);
   const background = readFileSync(join(srcDir, "background.js"), "utf8");
   const context = vm.createContext({
     chrome, fetch, AbortController, setTimeout, clearTimeout, console,
     navigator: { userAgent: "Chrome/130" },
-    importScripts: () => vm.runInContext(config, context),
+    importScripts: () => { vm.runInContext(config, context); vm.runInContext(protection, context); },
   });
   vm.runInContext(background, context);
 
@@ -61,7 +98,7 @@ function loadBackground(apiBaseUrl) {
     });
   }
 
-  return { store, fetchCalls, send };
+  return { store, sessionStore, fetchCalls, send, badge, setStorage: chrome.storage.local.set, tabRemovedListeners, injected, installedListeners, lifecycle };
 }
 
 const scanEvent = {
@@ -127,6 +164,80 @@ const scanEvent = {
 
     await bg.send({ type: "PREFLIGHT_DISCONNECT" });
     assert.equal(bg.store.account, undefined);
+  }
+
+  // Toolbar badge follows the on/off and pause settings.
+  {
+    const bg = loadBackground("");
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+    await bg.send({ type: "PREFLIGHT_GET_STATUS" });
+    await settle();
+    assert.equal(bg.badge.text, "", "no badge while protection is on");
+
+    const setProtection = async (protection) => {
+      await bg.setStorage({ protection });
+      await settle();
+      await settle();
+    };
+
+    await setProtection({ enabled: false });
+    assert.equal(bg.badge.text, "OFF", "badge shows OFF when switched off");
+
+    await setProtection({ enabled: true, pausedUntil: Date.now() + 60_000 });
+    assert.equal(bg.badge.text, "OFF", "badge shows OFF while paused");
+
+    await setProtection({ enabled: true, pausedUntil: Date.now() - 1 });
+    assert.equal(bg.badge.text, "", "badge clears once the pause has ended");
+  }
+
+  // A tab whose composer can't be found gets its own "!" badge.
+  {
+    const bg = loadBackground("");
+    const tab = { id: "test-extension", tab: { id: 7 } };
+    await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "broken" }, tab);
+    assert.equal(bg.badge.tabs[7], "!", "broken tab is flagged");
+    assert.equal(bg.sessionStore.tabHealth["7"], "broken");
+
+    await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "ok" }, tab);
+    assert.equal(bg.badge.tabs[7], null, "recovered tab falls back to the global badge");
+    assert.equal("7" in bg.sessionStore.tabHealth, false);
+
+    const bad = await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "<b>" }, tab);
+    assert.equal(bad.success, false, "unknown statuses are rejected");
+
+    await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "broken" }, tab);
+    await bg.tabRemovedListeners[0](7);
+    assert.equal("7" in bg.sessionStore.tabHealth, false, "closed tabs are forgotten");
+  }
+
+  // Attachment parsers are injected on request, only from the allowlist.
+  {
+    const bg = loadBackground("");
+    const frame = { id: "test-extension", tab: { id: 4 }, frameId: 0 };
+    const ok = await bg.send({ type: "PREFLIGHT_LOAD_PARSER", parser: "pdf" }, frame);
+    assert.equal(ok.success, true);
+    assert.deepEqual(JSON.parse(JSON.stringify(bg.injected[0])), {
+      target: { tabId: 4, frameIds: [0] },
+      files: ["src/vendor/pdf.min.js"],
+    });
+
+    for (const parser of ["../../evil.js", "constructor", "toString"]) {
+      const bad = await bg.send({ type: "PREFLIGHT_LOAD_PARSER", parser }, frame);
+      assert.equal(bad.success, false, `parser "${parser}" is rejected`);
+    }
+    const noTab = await bg.send({ type: "PREFLIGHT_LOAD_PARSER", parser: "docx" }, { id: "test-extension" });
+    assert.equal(noTab.success, false, "requests from outside a tab are rejected");
+    assert.equal(bg.injected.length, 1);
+  }
+
+  // Welcome page on first install only; uninstall page on the website.
+  {
+    const bg = loadBackground("");
+    assert.equal(bg.lifecycle.uninstallUrl, "https://vansh-s19.github.io/Preflight.ai/uninstall.html");
+    bg.installedListeners.forEach((fn) => fn({ reason: "update" }));
+    assert.deepEqual(bg.lifecycle.openedTabs, [], "updates don't reopen the welcome page");
+    bg.installedListeners.forEach((fn) => fn({ reason: "install" }));
+    assert.deepEqual(bg.lifecycle.openedTabs, ["chrome-extension://test-extension/src/welcome.html"]);
   }
 
   console.log("background: all tests passed");

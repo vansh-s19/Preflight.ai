@@ -7,15 +7,48 @@
  * only extracts text — it does not scan, warn, sanitize, or log anything.
  *
  * Parsing runs entirely client-side using vendored pdf.js (src/vendor/pdf.min.js)
- * and mammoth.js (src/vendor/mammoth.browser.min.js), loaded as regular
- * content scripts before this file.
+ * and mammoth.js (src/vendor/mammoth.browser.min.js). They are ~1 MB
+ * together, so instead of loading on every page they are injected into
+ * this content-script world by the background worker the first time a
+ * file of that type is attached (see PREFLIGHT_LOAD_PARSER).
  */
 (function () {
   const SUPPORTED_EXTENSIONS = ["pdf", "docx", "txt"];
+  const PARSER_GLOBALS = { pdf: "pdfjsLib", docx: "mammoth" };
+  const parserLoads = {};
 
   function extensionOf(fileName) {
     const parts = String(fileName || "").toLowerCase().split(".");
     return parts.length > 1 ? parts.pop() : "";
+  }
+
+  // Resolves once the parser's global exists. A failed load is forgotten so
+  // the next attachment tries again.
+  function loadParser(ext) {
+    const globalName = PARSER_GLOBALS[ext];
+    if (!globalName || typeof globalThis[globalName] !== "undefined") return Promise.resolve();
+    if (!parserLoads[ext]) {
+      parserLoads[ext] = new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: "PREFLIGHT_LOAD_PARSER", parser: ext }, (response) => {
+          if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+          else if (!response || !response.success || typeof globalThis[globalName] === "undefined") {
+            reject(new Error((response && response.error) || "parser_unavailable"));
+          } else resolve();
+        });
+      }).catch((error) => {
+        delete parserLoads[ext];
+        throw error;
+      });
+    }
+    return parserLoads[ext];
+  }
+
+  // Called as soon as files are picked, so the parser is usually ready by
+  // the time the user presses send.
+  function preload(files) {
+    Array.from(files || []).forEach((file) => {
+      loadParser(extensionOf(file.name)).catch(() => { /* retried at send time */ });
+    });
   }
 
   function ensurePdfWorkerConfigured() {
@@ -50,6 +83,7 @@
   async function extractOne(file) {
     const ext = extensionOf(file.name);
     try {
+      await loadParser(ext);
       if (ext === "pdf") return { name: file.name, text: await extractPdfText(file) };
       if (ext === "docx") return { name: file.name, text: await extractDocxText(file) };
       if (ext === "txt") return { name: file.name, text: await extractTxtText(file) };
@@ -75,5 +109,5 @@
     };
   }
 
-  window.PreflightFileScanner = { extractFilesText, SUPPORTED_EXTENSIONS };
+  window.PreflightFileScanner = { extractFilesText, preload, SUPPORTED_EXTENSIONS };
 })();

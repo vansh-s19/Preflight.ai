@@ -124,6 +124,90 @@
   // be undefined. Guard against this explicitly and resolve with [] so
   // the scan pipeline always completes and never blocks the send button.
   // ---------------------------------------------------------------------
+  // Detectors the user can switch off in the popup, in display order.
+  // Private keywords are left out: an Enterprise admin manages those.
+  const DETECTOR_TYPES = [
+    { type: "aadhaar", label: "Aadhaar Number", group: "personal" },
+    { type: "pan", label: "PAN Number", group: "personal" },
+    { type: "gst", label: "GSTIN", group: "personal" },
+    { type: "bank_account", label: "Bank Account Number", group: "personal" },
+    { type: "ifsc", label: "IFSC Code", group: "personal" },
+    { type: "phone", label: "Phone Number", group: "personal" },
+    { type: "email", label: "Email Address", group: "personal" },
+    { type: "openai_key", label: "OpenAI API Key", group: "secrets" },
+    { type: "anthropic_key", label: "Anthropic API Key", group: "secrets" },
+    { type: "aws_key", label: "AWS Access Key", group: "secrets" },
+    { type: "jwt", label: "JWT Token", group: "secrets" },
+    { type: "db_url", label: "Database Connection String", group: "secrets" },
+    { type: "private_key", label: "Private Key", group: "secrets" },
+    { type: "generic_secret", label: "Possible API Key / Secret", group: "secrets" },
+    { type: "hardcoded_password", label: "Hardcoded Password", group: "secrets" },
+    { type: "env_content", label: ".env / Configuration Value", group: "secrets" },
+    { type: "file_reference", label: "Sensitive File Type", group: "files" },
+    { type: "source_code", label: "Source Code Pasted as Text", group: "files" },
+  ];
+
+  // ---------------------------------------------------------------------
+  // User filters: detector types switched off in the popup, and values
+  // marked "not sensitive" from the warning. Values are kept only as
+  // SHA-256 hashes, so the stored list never holds the data itself.
+  // Fails open like getCompanyKeywords: no filters if storage is gone.
+  // ---------------------------------------------------------------------
+  const PREFS_KEY = "detectorPrefs";
+  const MAX_IGNORED_VALUES = 500;
+
+  function normalizePrefs(value) {
+    const prefs = value && typeof value === "object" ? value : {};
+    const strings = (list) => (Array.isArray(list) ? list.filter((item) => typeof item === "string") : []);
+    return { disabledTypes: strings(prefs.disabledTypes), ignoredHashes: strings(prefs.ignoredHashes) };
+  }
+
+  function getDetectorPrefs() {
+    return new Promise((resolve) => {
+      if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.local) {
+        resolve(normalizePrefs(null));
+        return;
+      }
+      try {
+        chrome.storage.local.get([PREFS_KEY], (result) => {
+          if (chrome.runtime && chrome.runtime.lastError) {
+            resolve(normalizePrefs(null));
+            return;
+          }
+          resolve(normalizePrefs(result && result[PREFS_KEY]));
+        });
+      } catch (err) {
+        resolve(normalizePrefs(null));
+      }
+    });
+  }
+
+  async function hashValue(value) {
+    const normalized = String(value).trim().replace(/\s+/g, " ").toLowerCase();
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalized));
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  async function applyPrefs(findings, prefs) {
+    const disabled = new Set(prefs.disabledTypes);
+    const ignored = new Set(prefs.ignoredHashes);
+    const kept = [];
+    for (const finding of findings) {
+      if (disabled.has(finding.type)) continue;
+      if (ignored.size > 0 && ignored.has(await hashValue(finding.detected || finding.match))) continue;
+      kept.push(finding);
+    }
+    return kept;
+  }
+
+  // "Not sensitive, don't warn again" in the warning overlay.
+  async function ignoreFindings(findings) {
+    const hashes = await Promise.all(findings.map((finding) => hashValue(finding.detected || finding.match)));
+    const prefs = await getDetectorPrefs();
+    const ignoredHashes = [...new Set([...prefs.ignoredHashes, ...hashes])].slice(-MAX_IGNORED_VALUES);
+    await chrome.storage.local.set({ [PREFS_KEY]: { ...prefs, ignoredHashes } });
+  }
+
   function getCompanyKeywords() {
     return new Promise((resolve) => {
       // Guard: chrome.storage is undefined when the extension context is
@@ -138,7 +222,9 @@
         return;
       }
       try {
-        chrome.storage.local.get(["companyKeywords"], (result) => {
+        // Private keywords are an Enterprise feature: only used while a
+        // company account is connected.
+        chrome.storage.local.get(["companyKeywords", "account"], (result) => {
           // chrome.runtime.lastError is set if the context was invalidated
           // between the guard check and the callback firing.
           if (chrome.runtime && chrome.runtime.lastError) {
@@ -146,7 +232,8 @@
             resolve([]);
             return;
           }
-          resolve((result && result.companyKeywords) || []);
+          const connected = Boolean(result && result.account && result.account.token);
+          resolve((connected && result.companyKeywords) || []);
         });
       } catch (err) {
         console.warn("[Preflight] getCompanyKeywords threw —", err.message);
@@ -308,19 +395,14 @@
       const patternFindings = scanPatterns(text);
       const keywords = await getCompanyKeywords();
       const keywordFindings = findKeywordMatches(text, keywords);
-      return resolveOverlappingFindings(text, [...patternFindings, ...keywordFindings]);
+      const resolved = resolveOverlappingFindings(text, [...patternFindings, ...keywordFindings]);
+      return await applyPrefs(resolved, await getDetectorPrefs());
     } catch (err) {
       // Any unexpected detector failure must never block the send button.
       // Log and return clean so the pipeline continues normally.
       console.error("[Preflight] Layer1 scan error — failing open:", err);
       return [];
     }
-  }
-
-  function replaceValidAadhaar(text) {
-    return text.replace(AADHAAR_REGEX, (match) =>
-      isPlausibleAadhaar(match) ? SAFE_REPLACEMENTS.aadhaar : match
-    );
   }
 
   function escapeRegExp(value) {
@@ -330,30 +412,58 @@
   async function sanitize(text) {
     if (!text) return "";
 
+    // Leave alone what the scan would no longer flag: switched-off detector
+    // types and values the user marked as not sensitive.
+    const prefs = await getDetectorPrefs();
+    const disabled = new Set(prefs.disabledTypes);
+    const keep = new Set();
+    if (prefs.ignoredHashes.length > 0) {
+      const ignored = new Set(prefs.ignoredHashes);
+      for (const finding of scanPatterns(text)) {
+        if (ignored.has(await hashValue(finding.detected))) keep.add(finding.detected);
+      }
+    }
+    const replaceType = (input, regex, type, replacement = SAFE_REPLACEMENTS[type]) => {
+      if (disabled.has(type)) return input;
+      return input.replace(regex, (match, ...groups) => {
+        const group = typeof groups[0] === "string" ? groups[0] : null;
+        if (keep.has(match) || keep.has(match.trim()) || (group && keep.has(group))) return match;
+        return typeof replacement === "function" ? replacement(match, ...groups) : replacement;
+      });
+    };
+
     let safeText = text;
 
     // Replace the most specific credential formats first.
-    safeText = safeText.replace(
+    safeText = replaceType(
+      safeText,
       /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----[\s\S]*?(?:-----END (?:RSA |EC )?PRIVATE KEY-----|$)/g,
-      SAFE_REPLACEMENTS.private_key
+      "private_key"
     );
-    safeText = safeText.replace(ANTHROPIC_KEY_REGEX, SAFE_REPLACEMENTS.anthropic_key);
-    safeText = safeText.replace(OPENAI_KEY_REGEX, SAFE_REPLACEMENTS.openai_key);
-    safeText = safeText.replace(AWS_KEY_REGEX, SAFE_REPLACEMENTS.aws_key);
-    safeText = safeText.replace(JWT_REGEX, SAFE_REPLACEMENTS.jwt);
-    safeText = safeText.replace(DB_URL_REGEX, SAFE_REPLACEMENTS.db_url);
-    safeText = safeText.replace(GENERIC_API_KEY_REGEX, SAFE_REPLACEMENTS.generic_secret);
-    safeText = safeText.replace(HARDCODED_PASSWORD_REGEX, SAFE_REPLACEMENTS.hardcoded_password);
-    safeText = safeText.replace(GST_REGEX, SAFE_REPLACEMENTS.gst);
-    safeText = safeText.replace(PAN_REGEX, SAFE_REPLACEMENTS.pan);
-    safeText = safeText.replace(IFSC_REGEX, SAFE_REPLACEMENTS.ifsc);
-    safeText = safeText.replace(BANK_ACCOUNT_REGEX, SAFE_REPLACEMENTS.bank_account);
-    safeText = replaceValidAadhaar(safeText);
-    safeText = safeText.replace(PHONE_REGEX, SAFE_REPLACEMENTS.phone);
-    safeText = safeText.replace(EMAIL_REGEX, SAFE_REPLACEMENTS.email);
-    safeText = safeText.replace(FILE_REFERENCE_REGEX, (match, file) => match.replace(file, SAFE_REPLACEMENTS.file_reference));
-    safeText = safeText.replace(ENV_ASSIGNMENT_REGEX, SAFE_REPLACEMENTS.env_content);
-    safeText = safeText.replace(SOURCE_CODE_REGEX, SAFE_REPLACEMENTS.source_code);
+    safeText = replaceType(safeText, ANTHROPIC_KEY_REGEX, "anthropic_key");
+    safeText = replaceType(safeText, OPENAI_KEY_REGEX, "openai_key");
+    safeText = replaceType(safeText, AWS_KEY_REGEX, "aws_key");
+    safeText = replaceType(safeText, JWT_REGEX, "jwt");
+    safeText = replaceType(safeText, DB_URL_REGEX, "db_url");
+    safeText = replaceType(safeText, GENERIC_API_KEY_REGEX, "generic_secret");
+    safeText = replaceType(safeText, HARDCODED_PASSWORD_REGEX, "hardcoded_password");
+    safeText = replaceType(safeText, GST_REGEX, "gst");
+    safeText = replaceType(safeText, PAN_REGEX, "pan");
+    safeText = replaceType(safeText, IFSC_REGEX, "ifsc");
+    // The pattern includes the "Account number:" label; swap only the number.
+    safeText = replaceType(safeText, BANK_ACCOUNT_REGEX, "bank_account", (match, number) =>
+      match.replace(number, SAFE_REPLACEMENTS.bank_account)
+    );
+    safeText = replaceType(safeText, AADHAAR_REGEX, "aadhaar", (match) =>
+      isPlausibleAadhaar(match) ? SAFE_REPLACEMENTS.aadhaar : match
+    );
+    safeText = replaceType(safeText, PHONE_REGEX, "phone");
+    safeText = replaceType(safeText, EMAIL_REGEX, "email");
+    safeText = replaceType(safeText, FILE_REFERENCE_REGEX, "file_reference", (match, file) =>
+      match.replace(file, SAFE_REPLACEMENTS.file_reference)
+    );
+    safeText = replaceType(safeText, ENV_ASSIGNMENT_REGEX, "env_content");
+    safeText = replaceType(safeText, SOURCE_CODE_REGEX, "source_code");
 
     const keywords = await getCompanyKeywords();
     keywords
@@ -381,5 +491,5 @@
     return "none";
   }
 
-  window.SentinelDetectors = { scan, sanitize, replacementFor, highestRisk };
+  window.SentinelDetectors = { scan, sanitize, replacementFor, highestRisk, ignoreFindings, DETECTOR_TYPES, PREFS_KEY };
 })();

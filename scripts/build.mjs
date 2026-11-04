@@ -67,10 +67,11 @@ for (const [marker, value] of [["PREFLIGHT_API_URL", apiUrl], ["PREFLIGHT_DASHBO
 }
 writeFileSync(configPath, config);
 
-// 3. The service worker needs host permission for the API origin only.
+// 3. Add host permission for the API origin, next to the AI sites the
+//    service worker injects attachment parsers into.
 const manifestPath = join(outDir, "manifest.json");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-if (apiUrl) manifest.host_permissions = [`${new URL(apiUrl).origin}/*`];
+if (apiUrl) manifest.host_permissions = [...(manifest.host_permissions || []), `${new URL(apiUrl).origin}/*`];
 if (dev) manifest.name = `${manifest.name} (dev)`;
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
@@ -82,6 +83,9 @@ const referenced = [
   ...Object.values(manifest.action.default_icon),
   ...manifest.content_scripts.flatMap((script) => [...(script.js || []), ...(script.css || [])]),
   ...manifest.web_accessible_resources.flatMap((entry) => entry.resources),
+  // Injected on demand by background.js (PARSER_FILES).
+  "src/vendor/pdf.min.js",
+  "src/vendor/mammoth.browser.min.js",
 ];
 const missing = referenced.filter((file) => !existsSync(join(outDir, file)));
 if (missing.length) fail(`manifest references missing files:\n  ${missing.join("\n  ")}`);

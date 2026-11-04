@@ -222,6 +222,21 @@
 }
 .sentinel-detail-item .sentinel-safe-value { color: #047857; }
 
+.sentinel-not-sensitive {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #4b5563;
+  font: 600 12px/1.4 inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.sentinel-not-sensitive:hover { color: #171e2b; }
+.sentinel-not-sensitive:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.25); outline-offset: 2px; border-radius: 4px; }
+.sentinel-dismiss-all { display: block; margin: 14px auto 0; }
+
 .sentinel-safety-note {
   display: flex;
   align-items: center;

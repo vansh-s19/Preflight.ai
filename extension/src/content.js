@@ -84,6 +84,21 @@
   // corresponding DOM event, it stays queued here until the next send.
   let pendingAttachments = [];
 
+  // On/off, pause and per-site settings from the popup. Cached here because
+  // handleSendAttempt must decide synchronously whether to intercept.
+  // Until storage answers, protection stays on.
+  let protection = PreflightProtection.normalize(null);
+  try {
+    chrome.storage.local.get([PreflightProtection.KEY], (result) => {
+      if (!chrome.runtime.lastError) protection = PreflightProtection.normalize(result[PreflightProtection.KEY]);
+    });
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && changes[PreflightProtection.KEY]) {
+        protection = PreflightProtection.normalize(changes[PreflightProtection.KEY].newValue);
+      }
+    });
+  } catch (err) { /* extension context invalidated: keep protection on */ }
+
   function attachmentKey(file) {
     return `${file.name}:${file.size}:${file.lastModified}`;
   }
@@ -98,6 +113,9 @@
         pendingAttachments.push(file);
       }
     });
+    if (window.PreflightFileScanner && PreflightProtection.isActive(protection, location.hostname)) {
+      window.PreflightFileScanner.preload(fileList);
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -255,6 +273,21 @@
     return pickComposer([...document.querySelectorAll(sel.inputBox)]);
   }
 
+  // Used when the site's own send-button selector stops matching after a
+  // redesign: a button labelled "send" that sits near a visible composer.
+  const GENERIC_SEND_BUTTON = 'button[aria-label*="send" i], button[data-testid*="send" i]';
+
+  function genericSendFromClick(target) {
+    const button = target.closest(GENERIC_SEND_BUTTON);
+    if (!button) return null;
+    let scope = button.parentElement;
+    for (let depth = 0; scope && depth < 6; depth += 1, scope = scope.parentElement) {
+      const editors = [...scope.querySelectorAll(GENERIC_EDITOR)].filter(isVisible);
+      if (editors.length > 0) return { button, inputBox: pickComposer(editors) };
+    }
+    return null;
+  }
+
   function composerFromEvent(event) {
     const path = event.composedPath().filter((node) => node instanceof Element);
     const known = path.find((node) => node.matches(sel.inputBox));
@@ -265,12 +298,14 @@
 
   function attachInterceptors() {
     window.addEventListener("click", (event) => {
-      const sendButton = event.target instanceof Element
-        ? event.target.closest(sel.sendButton)
-        : null;
-      if (!sendButton) return;
-
-      handleSendAttempt(event, findInputBox(sendButton), sendButton);
+      if (!(event.target instanceof Element)) return;
+      const sendButton = event.target.closest(sel.sendButton);
+      if (sendButton) {
+        handleSendAttempt(event, findInputBox(sendButton), sendButton);
+        return;
+      }
+      const fallback = genericSendFromClick(event.target);
+      if (fallback) handleSendAttempt(event, fallback.inputBox, fallback.button);
     }, true);
 
     window.addEventListener("keydown", (event) => {
@@ -324,6 +359,13 @@
         }, 0);
       }
       return; // do not preventDefault — allow native send
+    }
+
+    // Switched off, paused, or off for this site: let the site send as usual.
+    // Files picked meanwhile are dropped so they aren't checked on a later send.
+    if (!PreflightProtection.isActive(protection, location.hostname)) {
+      pendingAttachments = [];
+      return;
     }
 
     const text = getInputText(inputBox);
@@ -405,12 +447,13 @@
           pendingSend = null;
           logEvent({ stage: "pre_send", text, findings, action: "replaced_with_safe_data", scanStartedAt, attachmentCount });
         },
-        onProceed: () => {
+        onProceed: (action = "proceeded") => {
           pendingSend.approved = true;
-          logEvent({ stage: "pre_send", text, findings, action: "proceeded", scanStartedAt, attachmentCount });
+          logEvent({ stage: "pre_send", text, findings, action, scanStartedAt, attachmentCount });
           pendingAttachments = [];
           resumeSend(inputBox, sendButton);
         },
+        onNotSensitive: (dismissed) => window.SentinelDetectors.ignoreFindings(dismissed),
         onCancel: () => {
           pendingSend = null;
           logEvent({ stage: "pre_send", text, findings, action: "cancelled", scanStartedAt, attachmentCount });
@@ -592,20 +635,25 @@
   // ---------------------------------------------------------------------
   // Layer 1 warning overlay UI (unchanged)
   // ---------------------------------------------------------------------
-  function showWarningOverlay(findings, { onSanitize, onProceed, onCancel }) {
+  function showWarningOverlay(findings, { onSanitize, onProceed, onNotSensitive, onCancel }) {
     const existing = document.getElementById("sentinel-overlay");
     if (existing) existing.remove();
 
+    const RISK_LABELS = { critical: "Critical", high: "High", medium: "Medium", low: "Low" };
     const riskLevel = window.SentinelDetectors.highestRisk(findings);
-    const riskLabel = { critical: "Critical", high: "High", medium: "Medium", low: "Low" }[riskLevel] || "Low";
+    const riskLabel = RISK_LABELS[riskLevel] || "Low";
     const personalTypes = new Set(["aadhaar", "pan", "phone", "email", "bank_account"]);
     const credentialTypes = new Set(["openai_key", "anthropic_key", "aws_key", "jwt", "db_url", "private_key", "generic_secret", "hardcoded_password"]);
-    const categoryCounts = findings.reduce((counts, finding) => {
+    const countCategories = (list) => list.reduce((counts, finding) => {
       if (personalTypes.has(finding.type)) counts.personal += 1;
       else if (credentialTypes.has(finding.type)) counts.credentials += 1;
       else counts.business += 1;
       return counts;
     }, { personal: 0, credentials: 0, business: 0 });
+    const categoryCounts = countCategories(findings);
+    // Private keywords come from the company, so users can't dismiss them.
+    const canDismiss = (finding) => finding.type !== "company_keyword";
+    const remaining = new Set(findings.keys());
 
     const overlay = document.createElement("div");
     overlay.id = "sentinel-overlay";
@@ -622,7 +670,7 @@
     };
 
     const categoryCard = (kind, label, count, icon) => `
-      <div class="sentinel-category ${kind} ${count ? "is-active" : ""}">
+      <div class="sentinel-category ${kind} ${count ? "is-active" : ""}" data-category="${kind}">
         <span class="sentinel-category-icon">${icon}</span>
         <span class="sentinel-category-label">${label}</span>
         <strong>${count}</strong>
@@ -655,12 +703,13 @@
             ${icons.chevron}<span>View Details</span>
           </button>
           <div id="sentinel-details" class="sentinel-details" hidden>
-            ${findings.map((f) => `
-              <section class="sentinel-detail-item">
+            ${findings.map((f, index) => `
+              <section class="sentinel-detail-item" data-finding="${index}">
                 <span class="sentinel-detail-icon">${icons.id}</span>
                 <h3>${escapeHtml(f.label)}</h3>
                 <div class="sentinel-detail-row"><span class="sentinel-detail-label">Detected:</span><code>${escapeHtml(f.detected || f.match)}</code></div>
                 <div class="sentinel-detail-row"><span class="sentinel-detail-label">Replacement:</span><code class="sentinel-safe-value">${escapeHtml(window.SentinelDetectors.replacementFor(f.type))}</code></div>
+                ${canDismiss(f) ? `<button class="sentinel-not-sensitive" type="button" data-dismiss="${index}">Not sensitive, don't warn again</button>` : ""}
               </section>`).join("")}
           </div>
           <div class="sentinel-safety-note">${icons.shield}<span>Replacing will keep your prompt useful while protecting sensitive data.</span></div>
@@ -668,6 +717,7 @@
             <button id="sentinel-sanitize-btn" class="sentinel-btn sentinel-btn-sanitize">${icons.shield}<span>Replace with Safe Data</span></button>
             <button id="sentinel-proceed-btn" class="sentinel-btn sentinel-btn-proceed">${icons.send}<span>Send Anyway</span></button>
           </div>
+          ${findings.some(canDismiss) ? '<button id="sentinel-dismiss-all-btn" class="sentinel-not-sensitive sentinel-dismiss-all" type="button">Not sensitive? Send and don\'t warn me about these again</button>' : ""}
         </div>
       </section>
     `;
@@ -703,6 +753,43 @@
     document.getElementById("sentinel-proceed-btn").addEventListener("click", () => {
       overlay.remove();
       onProceed();
+    });
+
+    // "Not sensitive": remember the values, drop them from this warning, and
+    // send once nothing is left to warn about.
+    const dismiss = async (indexes) => {
+      try {
+        await onNotSensitive(indexes.map((index) => findings[index]));
+      } catch (error) {
+        console.error("[Preflight.ai] could not save not-sensitive values", error);
+        return;
+      }
+      indexes.forEach((index) => {
+        remaining.delete(index);
+        overlay.querySelector(`[data-finding="${index}"]`)?.remove();
+      });
+      const left = [...remaining].map((index) => findings[index]);
+      if (left.length === 0) {
+        overlay.remove();
+        onProceed("marked_not_sensitive");
+        return;
+      }
+      const counts = countCategories(left);
+      Object.entries(counts).forEach(([kind, count]) => {
+        const card = overlay.querySelector(`[data-category="${kind}"]`);
+        card.classList.toggle("is-active", count > 0);
+        card.querySelector("strong").textContent = String(count);
+      });
+      const level = window.SentinelDetectors.highestRisk(left);
+      overlay.querySelector(".sentinel-modal-header").className = `sentinel-modal-header sentinel-risk-${level}`;
+      overlay.querySelector(".sentinel-risk-badge").lastChild.textContent = RISK_LABELS[level] || "Low";
+      if (!left.some(canDismiss)) overlay.querySelector("#sentinel-dismiss-all-btn")?.remove();
+    };
+    overlay.querySelectorAll("[data-dismiss]").forEach((button) => {
+      button.addEventListener("click", () => dismiss([Number(button.dataset.dismiss)]));
+    });
+    overlay.querySelector("#sentinel-dismiss-all-btn")?.addEventListener("click", () => {
+      dismiss([...remaining].filter((index) => canDismiss(findings[index])));
     });
   }
 
@@ -768,10 +855,59 @@
   }
 
   // ---------------------------------------------------------------------
+  // Self-check. On a page that should have a chat composer, report whether
+  // the site's known composer can be found. When it can't, the site's
+  // layout has probably changed and sends may slip through unchecked, so
+  // the background flags the toolbar icon for this tab. Other pages
+  // (settings, login, GPT store) report "unknown" and are never flagged.
+  // ---------------------------------------------------------------------
+  const CHAT_PATHS = {
+    chatgpt: /^\/(?:c\/[^/]+|g\/[^/]+(?:\/c\/[^/]+)?)?\/?$/,
+    claude: /^\/(?:new|chat\/[^/]+|project\/[^/]+)\/?$/,
+  };
+  const HEALTH_INTERVAL_MS = 4000;
+  const HEALTH_GRACE_MS = 10000; // the composer renders after the app boots
+  let lastHealth = "";
+  let composerMissingSince = 0;
+
+  function checkHealth() {
+    let status = "unknown";
+    if (PreflightProtection.isActive(protection, location.hostname) && CHAT_PATHS[SITE].test(location.pathname)) {
+      if ([...document.querySelectorAll(sel.inputBox)].some(isVisible)) {
+        composerMissingSince = 0;
+        status = "ok";
+      } else {
+        composerMissingSince = composerMissingSince || Date.now();
+        status = Date.now() - composerMissingSince >= HEALTH_GRACE_MS ? "broken" : lastHealth || "unknown";
+      }
+    } else {
+      composerMissingSince = 0;
+    }
+
+    if (status === lastHealth) return;
+    lastHealth = status;
+    try {
+      chrome.runtime.sendMessage({ type: "PREFLIGHT_SITE_HEALTH", status }, () => void chrome.runtime.lastError);
+    } catch (err) { /* extension context invalidated */ }
+  }
+
+  function startHealthChecks() {
+    checkHealth();
+    setInterval(checkHealth, HEALTH_INTERVAL_MS);
+  }
+
+  // ---------------------------------------------------------------------
   // Boot
   // ---------------------------------------------------------------------
   attachInterceptors();
   // Content scripts run at document_start (see manifest), before <body> exists.
-  if (document.body) observeResponses();
-  else document.addEventListener("DOMContentLoaded", observeResponses, { once: true });
+  if (document.body) {
+    observeResponses();
+    startHealthChecks();
+  } else {
+    document.addEventListener("DOMContentLoaded", () => {
+      observeResponses();
+      startHealthChecks();
+    }, { once: true });
+  }
 })();
