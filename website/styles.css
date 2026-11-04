@@ -52,7 +52,7 @@ body {
 
 img, svg { display: block; }
 /* The display font joins "fl" by default, which blurs the product name. */
-.brand, h1, h2, h3 { font-variant-ligatures: no-common-ligatures; }
+.brand, h1, h2, h3, .catches-text { font-variant-ligatures: no-common-ligatures; }
 a { color: inherit; }
 h1, h2, h3, p { margin: 0; }
 code { font-family: var(--mono); font-size: 0.86em; }
@@ -416,6 +416,36 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 }
 .demo-cursor.is-clicking .demo-ripple { animation: ripple 0.5s ease-out; }
 @keyframes ripple { from { opacity: 1; transform: scale(0.3); } to { opacity: 0; transform: scale(1.4); } }
+
+/* ---------- What it catches ---------- */
+.catches { padding: 40px 0 88px; }
+.catches-text {
+  max-width: 940px;
+  margin-inline: auto;
+  text-align: center;
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  font-size: clamp(26px, 3.2vw, 38px);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.chip {
+  display: inline-block;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--sans);
+  font-size: 0.5em;
+  font-weight: 600;
+  line-height: 2.2;
+  color: var(--ink);
+  vertical-align: 0.35em;
+  white-space: nowrap;
+}
+.chip-accent { background: var(--green-tint); border-color: #c8ead4; color: var(--green-ink); }
 
 /* ---------- Sections ---------- */
 .section { padding: 96px 0; }
