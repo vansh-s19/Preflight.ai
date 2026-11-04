@@ -54,4 +54,4 @@ Sample text: `My PAN is ABCDE1234F, call me on +91 9876543210`
 
 ## Uninstall
 
-- [ ] Removing the extension opens `<WEBSITE_URL>uninstall.html` (once the site is deployed).
+- [ ] Removing the extension opens `https://preflightai.in/uninstall.html`.

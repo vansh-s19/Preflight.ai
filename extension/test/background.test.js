@@ -233,7 +233,7 @@ const scanEvent = {
   // Welcome page on first install only; uninstall page on the website.
   {
     const bg = loadBackground("");
-    assert.equal(bg.lifecycle.uninstallUrl, "https://vansh-s19.github.io/Preflight.ai/uninstall.html");
+    assert.equal(bg.lifecycle.uninstallUrl, "https://preflightai.in/uninstall.html");
     bg.installedListeners.forEach((fn) => fn({ reason: "update" }));
     assert.deepEqual(bg.lifecycle.openedTabs, [], "updates don't reopen the welcome page");
     bg.installedListeners.forEach((fn) => fn({ reason: "install" }));
