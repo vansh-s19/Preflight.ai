@@ -42,3 +42,21 @@ python3.11 -m venv .venv
 .venv/bin/python -m pytest -q
 .venv/bin/uvicorn main:app --port 8000
 ```
+
+Every endpoint except `/health` needs an organisation access token
+(`Authorization: Bearer pft_…`), and dashboard data is scoped to the token's
+organisation. Create organisations and tokens with the admin CLI:
+
+```bash
+cd backend
+.venv/bin/python manage.py create-org org_acme "Acme Corp" --plan growth
+.venv/bin/python manage.py issue-token org_acme --label "Pilot"   # prints the token once
+.venv/bin/python manage.py list-tokens org_acme
+.venv/bin/python manage.py revoke-token <id>
+```
+
+Plans are `starter`, `growth` (adds Layer 2) and `business` (adds Layer 3);
+change one with `manage.py set-plan`. Only a hash of each token is stored, so
+copy it when it's printed and paste it into the extension popup. Organisations,
+tokens and scan events share `backend/preflight_monitoring.sqlite3`; set
+`PREFLIGHT_DB_PATH` to use another file.
