@@ -844,6 +844,9 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 .plan-list li { display: flex; gap: 10px; font-size: 15px; color: var(--ink-soft); }
 .plan-list svg { flex: none; width: 20px; height: 20px; margin-top: 1px; padding: 3px; border-radius: 50%; background: var(--green-tint); color: var(--green); }
 .plan .btn { align-self: flex-start; }
+.plan-soon { padding-top: 18px; border-top: 1px dashed var(--line); }
+.plan-soon p { color: var(--muted); font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.plan-soon ul { display: grid; gap: 8px; margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 14.5px; }
 
 /* FAQ */
 .faq { display: grid; gap: 12px; }
