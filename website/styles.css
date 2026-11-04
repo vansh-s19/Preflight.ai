@@ -256,8 +256,8 @@ h1 {
 .window .window-dots i:nth-child(2) { background: #febc2e; }
 .window .window-dots i:nth-child(3) { background: #28c840; }
 .browser-tab { display: inline-flex; align-items: center; gap: 8px; width: 190px; height: 28px; padding: 0 10px; border-radius: 9px 9px 0 0; background: #fff; color: var(--ink); font-size: 11.5px; font-weight: 500; }
-.browser-tab svg { width: 10px; height: 10px; margin-left: auto; color: var(--muted); }
-.browser-favicon { flex: none; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle, #fff 0 2.5px, transparent 3px), var(--ink); }
+.browser-tab-close { width: 10px; height: 10px; margin-left: auto; color: var(--muted); }
+.browser-favicon { flex: none; width: 14px; height: 14px; color: #0d0d0d; }
 .browser-newtab { align-self: center; width: 13px; height: 13px; color: #5f6368; }
 .browser-toolbar { display: flex; align-items: center; gap: 12px; height: calc(var(--bar-h) - 34px); padding: 0 12px; background: #fff; border-bottom: 1px solid var(--line); }
 .browser-nav { display: flex; gap: 10px; color: #5f6368; }
