@@ -110,7 +110,8 @@ code { font-family: var(--mono); font-size: 0.86em; }
   -webkit-backdrop-filter: saturate(1.4) blur(14px);
   box-shadow: 0 10px 30px -22px rgb(15 23 42 / 0.35);
 }
-.nav-inner { display: flex; align-items: center; gap: 24px; height: 64px; }
+/* As wide as the hero, so the logo sits straight above the headline. */
+.nav-inner { display: flex; align-items: center; gap: 24px; height: 64px; width: min(1280px, 100% - 64px); }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; text-decoration: none; letter-spacing: -0.01em; }
 .brand-mark { width: 32px; height: 32px; filter: drop-shadow(0 2px 4px rgb(251 1 2 / 0.25)); }
 .nav-links { display: flex; gap: 28px; margin-left: auto; }
@@ -149,7 +150,8 @@ code { font-family: var(--mono); font-size: 0.86em; }
   pointer-events: none;
 }
 /* Wider than the page container so the laptop gets room beside the copy. */
-.hero-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 48px; align-items: center; width: min(1280px, 100% - 64px); }
+/* The copy column is as wide as the steps row; the laptop takes the rest. */
+.hero-grid { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 56px; align-items: center; width: min(1280px, 100% - 64px); }
 
 h1 {
   font-family: var(--display);
@@ -160,19 +162,20 @@ h1 {
   text-wrap: balance;
 }
 
-/* Sized to sit beside the laptop without crowding it. */
-.hero h1 { font-size: clamp(40px, 4.3vw, 62px); }
+/* Three short lines, set like backdoorai.app: tight leading and tracking. */
+.hero h1 { font-size: clamp(44px, 5.3vw, 76px); line-height: 1; letter-spacing: -0.04em; }
 
 .steps-inline {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
   align-items: center;
   gap: 10px;
-  margin: 28px 0 0;
+  margin: 32px 0 0;
   padding: 0;
   list-style: none;
   color: var(--ink-soft);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
 }
 .steps-inline li { display: inline-flex; align-items: center; gap: 8px; }
@@ -183,12 +186,8 @@ h1 {
 .dot-amber { background: var(--amber-tint); color: var(--amber); }
 .dot-green { background: var(--green-tint); color: var(--green); }
 
-.hero-cta { margin-top: 36px; display: grid; justify-items: start; gap: 20px; }
-.hero .btn-large { min-height: 52px; padding: 0 26px; font-size: 16px; }
-.hero-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
-.hero-trust { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; list-style: none; color: var(--ink-soft); font-size: 14px; }
-.hero-trust li { display: inline-flex; align-items: center; gap: 7px; }
-.hero-trust svg { width: 18px; height: 18px; padding: 3px; border-radius: 50%; background: var(--green-tint); color: var(--green); }
+.hero-cta { margin-top: 40px; display: grid; justify-items: start; }
+.hero .btn-large { min-height: 56px; padding: 0 30px; font-size: 16px; }
 
 /* Browser mockup */
 .hero-visual { position: relative; }
@@ -963,8 +962,9 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 }
 
 /* Too narrow for the laptop beside the copy: it moves underneath. */
-@media (max-width: 1100px) {
+@media (max-width: 1240px) {
   .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 56px; }
+  .steps-inline { flex-wrap: wrap; white-space: normal; }
   .hero-visual { width: min(760px, 100%); margin-inline: auto; padding-inline: 6%; }
   .hero-float-status { left: 0; }
   .hero-float-local { right: 0; }
@@ -972,10 +972,12 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 
 @media (max-width: 860px) {
   /* Sized so "Catch leaks before" always fits on its line. */
-  h1, .hero h1 { font-size: clamp(32px, 10vw, 56px); }
+  h1 { font-size: clamp(32px, 10vw, 56px); }
+  .hero h1 { font-size: clamp(40px, 12vw, 64px); }
   .hero { padding: 108px 0 64px; }
   .privacy-panel { padding: 72px 0; }
-  .hero-grid { gap: 44px; width: min(1280px, 100% - 32px); }
+  .hero-grid, .nav-inner { width: min(1280px, 100% - 32px); }
+  .hero-grid { gap: 44px; }
   .nav-links { display: none; }
   .nav-inner > .btn { margin-left: auto; }
   .compare { grid-template-columns: 1fr; }
