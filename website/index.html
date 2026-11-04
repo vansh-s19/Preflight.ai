@@ -74,11 +74,18 @@
             <li><span class="dot dot-green"><svg aria-hidden="true"><use href="#i-swap" /></svg></span>Swaps in safe data</li>
           </ol>
           <div class="hero-cta">
-            <a class="btn btn-dark btn-large" data-install href="#">
-              <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
-              <span data-install-label>Add to Chrome, it's free</span>
-            </a>
-            <p class="hero-note">No sign-up. Your prompts never leave your browser.</p>
+            <div class="hero-buttons">
+              <a class="btn btn-dark btn-large" data-install href="#">
+                <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
+                <span data-install-label>Add to Chrome, it's free</span>
+              </a>
+              <a class="btn btn-light btn-large" href="#how">See how it works</a>
+            </div>
+            <ul class="hero-trust">
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Free for personal use</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>No sign-up</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Prompts never leave your browser</li>
+            </ul>
           </div>
         </div>
 
@@ -91,7 +98,10 @@
               <span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span>
             </div>
             <div class="window-body" aria-hidden="true">
-              <div class="chat-area" data-demo-chat></div>
+              <div class="chat-area" data-demo-chat>
+                <div class="chat-bubble">Can you help me with client emails this week?</div>
+                <div class="assistant-reply"><span class="assistant-avatar"></span>Of course! Share the details and I'll draft each one for you.</div>
+              </div>
               <div class="composer">
                 <div class="composer-text" data-demo-text>Draft a payment reminder for our client. His PAN is <mark class="hit">ABCDE1234F</mark> and Account Number: <mark class="hit">50100234567890</mark>. Test it with our key <mark class="hit">sk-proj-a81F…kQ2</mark></div>
                 <span class="composer-send" data-demo-send><svg><use href="#i-arrow" /></svg></span>
@@ -124,6 +134,16 @@
               <svg viewBox="0 0 24 24"><path d="M5 3.5 19 12l-6.4 1.5L9.4 19.6Z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" /></svg>
               <span class="demo-ripple"></span>
             </div>
+          </div>
+
+          <div class="hero-float hero-float-status" aria-hidden="true">
+            <svg class="hero-float-logo"><use href="#logo" /></svg>
+            <span><b>Preflight is on</b><small>Watching chatgpt.com</small></span>
+            <i class="live-dot"></i>
+          </div>
+          <div class="hero-float hero-float-local" aria-hidden="true">
+            <span class="hero-float-icon"><svg><use href="#i-lock" /></svg></span>
+            <span><b>0 uploads</b><small>Every check runs on your device</small></span>
           </div>
         </div>
       </div>
