@@ -17,6 +17,8 @@
   const replace = $("replace");
   const toast = $("toast");
   const toastText = $("toast-text");
+  // An earlier exchange stays in the chat so the window never looks empty.
+  const history = [...chat.children];
   const sleep = PreflightDemo.clock(demo);
   const pointer = PreflightDemo.cursor(demo, $("cursor"), sleep);
 
@@ -54,7 +56,7 @@
   }
 
   function reset() {
-    chat.replaceChildren();
+    chat.replaceChildren(...history);
     text.replaceChildren();
     scrim.classList.remove("is-on");
     card.classList.remove("is-open");

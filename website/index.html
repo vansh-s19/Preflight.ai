@@ -65,7 +65,7 @@
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <h1>Catch leaks before you hit&nbsp;send.</h1>
+          <h1>Catch leaks before<br /> you hit&nbsp;send.</h1>
           <ol class="steps-inline" aria-label="What Preflight does">
             <li><span class="dot dot-blue"><svg aria-hidden="true"><use href="#i-search" /></svg></span>Spots sensitive data</li>
             <li aria-hidden="true" class="steps-arrow">→</li>
@@ -74,11 +74,18 @@
             <li><span class="dot dot-green"><svg aria-hidden="true"><use href="#i-swap" /></svg></span>Swaps in safe data</li>
           </ol>
           <div class="hero-cta">
-            <a class="btn btn-dark btn-large" data-install href="#">
-              <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
-              <span data-install-label>Add to Chrome, it's free</span>
-            </a>
-            <p class="hero-note">No sign-up. Your prompts never leave your browser.</p>
+            <div class="hero-buttons">
+              <a class="btn btn-dark btn-large" data-install href="#">
+                <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
+                <span data-install-label>Add to Chrome, it's free</span>
+              </a>
+              <a class="btn btn-light btn-large" href="#how">See how it works</a>
+            </div>
+            <ul class="hero-trust">
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Free for personal use</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>No sign-up</li>
+              <li><svg aria-hidden="true"><use href="#i-check" /></svg>Prompts never leave your browser</li>
+            </ul>
           </div>
         </div>
 
@@ -91,7 +98,10 @@
               <span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span>
             </div>
             <div class="window-body" aria-hidden="true">
-              <div class="chat-area" data-demo-chat></div>
+              <div class="chat-area" data-demo-chat>
+                <div class="chat-bubble">Can you help me with client emails this week?</div>
+                <div class="assistant-reply"><span class="assistant-avatar"></span>Of course! Share the details and I'll draft each one for you.</div>
+              </div>
               <div class="composer">
                 <div class="composer-text" data-demo-text>Draft a payment reminder for our client. His PAN is <mark class="hit">ABCDE1234F</mark> and Account Number: <mark class="hit">50100234567890</mark>. Test it with our key <mark class="hit">sk-proj-a81F…kQ2</mark></div>
                 <span class="composer-send" data-demo-send><svg><use href="#i-arrow" /></svg></span>
@@ -124,6 +134,16 @@
               <svg viewBox="0 0 24 24"><path d="M5 3.5 19 12l-6.4 1.5L9.4 19.6Z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" /></svg>
               <span class="demo-ripple"></span>
             </div>
+          </div>
+
+          <div class="hero-float hero-float-status" aria-hidden="true">
+            <svg class="hero-float-logo"><use href="#logo" /></svg>
+            <span><b>Preflight is on</b><small>Watching chatgpt.com</small></span>
+            <i class="live-dot"></i>
+          </div>
+          <div class="hero-float hero-float-local" aria-hidden="true">
+            <span class="hero-float-icon"><svg><use href="#i-lock" /></svg></span>
+            <span><b>0 uploads</b><small>Every check runs on your device</small></span>
           </div>
         </div>
       </div>
@@ -163,55 +183,74 @@
         <div class="how-grid">
           <article class="how-card">
             <div class="how-visual tint-sky" data-how="type" aria-hidden="true">
-              <div class="mini-window mini-composer">
-                <p class="mini-input" data-how-text>Summarise this contract for me</p>
-                <div class="mini-file is-done" data-how-file>
-                  <span class="mini-file-badge">PDF</span>
-                  <span class="mini-file-meta">
-                    <b>vendor_agreement.pdf</b>
-                    <span class="mini-progress"><i data-how-progress style="width:100%"></i></span>
-                    <span class="mini-file-size">1.2 MB</span>
-                  </span>
-                </div>
-                <div class="mini-toolbar">
-                  <svg aria-hidden="true"><use href="#i-clip" /></svg>
-                  <span class="mini-send is-ready" data-how-send><svg><use href="#i-arrow" /></svg></span>
+              <div class="device">
+                <div class="device-bar"><span class="window-dots"><i></i><i></i><i></i></span><span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span></div>
+                <div class="device-body">
+                  <p class="device-greeting">What can I help with?</p>
+                  <div class="mini-composer">
+                    <p class="mini-input" data-how-text>Summarise this contract for me</p>
+                    <div class="mini-file is-done" data-how-file>
+                      <span class="mini-file-badge">PDF</span>
+                      <span class="mini-file-meta">
+                        <b>vendor_agreement.pdf</b>
+                        <span class="mini-progress"><i data-how-progress style="width:100%"></i></span>
+                        <span class="mini-file-size">1.2 MB</span>
+                      </span>
+                    </div>
+                    <div class="mini-toolbar">
+                      <svg><use href="#i-clip" /></svg>
+                      <span class="mini-send is-ready" data-how-send><svg><use href="#i-arrow" /></svg></span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <p class="how-num">Step 1</p>
-            <h3>Type or paste as usual</h3>
+            <h3><span class="how-num">1</span>Type or paste as usual</h3>
             <p>Write in ChatGPT or Claude, or attach a PDF, Word or text file.</p>
           </article>
 
           <article class="how-card">
             <div class="how-visual tint-peach" data-how="scan" aria-hidden="true">
-              <div class="mini-window scan-panel">
-                <div class="scan-head">
-                  <span class="scan-status is-flag" data-how-status>1 issue found</span>
-                  <span class="scan-local"><svg><use href="#i-lock" /></svg>On device</span>
+              <div class="device">
+                <div class="device-bar"><span class="window-dots"><i></i><i></i><i></i></span><span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span></div>
+                <div class="device-body">
+                  <div class="mini-card scan-panel">
+                    <div class="scan-head">
+                      <span class="scan-brand"><svg><use href="#logo" /></svg>Preflight</span>
+                      <span class="scan-local"><svg><use href="#i-lock" /></svg>On device</span>
+                    </div>
+                    <span class="scan-status is-flag" data-how-status>1 issue found</span>
+                    <span class="scan-bar"><i data-how-bar style="width:100%"></i></span>
+                    <ul class="mini-checks">
+                      <li data-how-row><span class="row-icon"><svg><use href="#i-check" /></svg></span>Personal details</li>
+                      <li data-how-row><span class="row-icon"><svg><use href="#i-check" /></svg></span>Keys &amp; passwords</li>
+                      <li data-how-row><span class="row-icon"><svg><use href="#i-check" /></svg></span>vendor_agreement.pdf</li>
+                      <li class="flag" data-how-row><span class="row-icon"><svg><use href="#i-alert" /></svg></span>Bank account found</li>
+                    </ul>
+                  </div>
                 </div>
-                <span class="scan-bar"><i data-how-bar style="width:100%"></i></span>
-                <ul class="mini-checks">
-                  <li data-how-row><span class="row-icon"><svg><use href="#i-check" /></svg></span>Personal details</li>
-                  <li data-how-row><span class="row-icon"><svg><use href="#i-check" /></svg></span>Keys &amp; passwords</li>
-                  <li class="flag" data-how-row><span class="row-icon"><svg><use href="#i-alert" /></svg></span>Bank account found</li>
-                </ul>
               </div>
             </div>
-            <p class="how-num">Step 2</p>
-            <h3>Preflight checks first</h3>
+            <h3><span class="how-num">2</span>Preflight checks first</h3>
             <p>When you hit send, it scans the message and attachments on your device, in a blink.</p>
           </article>
 
           <article class="how-card">
             <div class="how-visual tint-lilac" data-how="decide" aria-hidden="true">
-              <div class="mini-window mini-alert">
-                <div class="mini-alert-head"><span class="mini-alert-icon"><svg><use href="#i-alert" /></svg></span>Bank account found</div>
-                <p class="mini-value"><mark class="hit" data-how-value>50100234567890</mark></p>
-                <div class="mini-actions">
-                  <span class="fake-btn fake-btn-primary" data-how-replace><svg><use href="#i-shield" /></svg><span data-how-replace-label>Replace with Safe Data</span></span>
-                  <span class="fake-btn">Send Anyway</span>
+              <div class="device">
+                <div class="device-bar"><span class="window-dots"><i></i><i></i><i></i></span><span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span></div>
+                <div class="device-body">
+                  <div class="mini-card mini-alert">
+                    <div class="mini-alert-head">
+                      <span class="mini-alert-icon"><svg><use href="#i-alert" /></svg></span>
+                      <span>Bank account found<small>Review before sending</small></span>
+                    </div>
+                    <p class="mini-value"><mark class="hit" data-how-value>50100234567890</mark></p>
+                    <div class="mini-actions">
+                      <span class="fake-btn fake-btn-primary" data-how-replace><svg><use href="#i-shield" /></svg><span data-how-replace-label>Replace with Safe Data</span></span>
+                      <span class="fake-btn">Send Anyway</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="demo-cursor" data-how-cursor>
@@ -219,25 +258,27 @@
                 <span class="demo-ripple"></span>
               </div>
             </div>
-            <p class="how-num">Step 3</p>
-            <h3>You decide</h3>
+            <h3><span class="how-num">3</span>You decide</h3>
             <p>Swap in safe placeholders, send anyway, or close it and edit. Preflight never blocks you.</p>
           </article>
 
           <article class="how-card">
             <div class="how-visual tint-mint" data-how="reply" aria-hidden="true">
-              <div class="mini-window mini-chat">
-                <div class="mini-bubble" data-how-bubble>Remind the client to pay into <code>[SYNTHETIC_BANK_ACCOUNT]</code> by Friday.</div>
-                <div class="mini-sent" data-how-sent><svg><use href="#i-check" /></svg>Sent safely</div>
-                <div class="mini-reply" data-how-reply>
-                  <span class="assistant-avatar"></span>
-                  <span class="typing-dots" data-how-dots hidden><i></i><i></i><i></i></span>
-                  <span data-how-reply-text>Sure! Here's a friendly reminder you can send today.</span>
+              <div class="device">
+                <div class="device-bar"><span class="window-dots"><i></i><i></i><i></i></span><span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span></div>
+                <div class="device-body mini-chat">
+                  <div class="mini-bubble" data-how-bubble>Remind the client to pay into <code>[SYNTHETIC_BANK_ACCOUNT]</code> by Friday.</div>
+                  <div class="mini-sent" data-how-sent><svg><use href="#i-check" /></svg>Sent safely</div>
+                  <div class="mini-reply" data-how-reply>
+                    <span class="assistant-avatar"></span>
+                    <span class="typing-dots" data-how-dots hidden><i></i><i></i><i></i></span>
+                    <span data-how-reply-text>Sure! Here's a friendly reminder: "Hi! Just a gentle nudge that this month's payment is due by Friday. Thank you!"</span>
+                  </div>
+                  <div class="device-composer">Message ChatGPT<span class="mini-send"><svg><use href="#i-arrow" /></svg></span></div>
                 </div>
               </div>
             </div>
-            <p class="how-num">Step 4</p>
-            <h3>The AI still helps</h3>
+            <h3><span class="how-num">4</span>The AI still helps</h3>
             <p>Your prompt keeps its meaning. Only the real values are gone.</p>
           </article>
         </div>
@@ -503,5 +544,7 @@
   <script src="anim.js"></script>
   <script src="demo.js"></script>
   <script src="how.js"></script>
+  <script src="vendor/lenis.min.js"></script>
+  <script src="scroll.js"></script>
 </body>
 </html>
