@@ -6,7 +6,8 @@
   "minimum_chrome_version": "111",
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "activeTab"
   ],
   "background": {
     "service_worker": "src/background.js"
@@ -21,6 +22,7 @@
       "js": [
         "src/vendor/pdf.min.js",
         "src/vendor/mammoth.browser.min.js",
+        "src/protection.js",
         "src/fileScanner.js",
         "src/detectors.js",
         "src/content.js"

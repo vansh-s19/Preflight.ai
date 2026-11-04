@@ -1,7 +1,9 @@
 const assert = require("node:assert/strict");
 
 global.window = {};
-global.chrome = { storage: { local: { get: (_keys, cb) => cb({ companyKeywords: ["Project Falcon"] }) } } };
+// Private keywords only apply while a company account is connected.
+const storage = { companyKeywords: ["Project Falcon"], account: { token: "t" } };
+global.chrome = { storage: { local: { get: (_keys, cb) => cb(storage) } } };
 require("../src/detectors.js");
 
 async function expectType(text, type) {
@@ -19,6 +21,10 @@ async function expectType(text, type) {
   await expectType("password = 'correct-horse-123'", "hardcoded_password");
   await expectType("Please review payroll.xlsx", "file_reference");
   await expectType("Project Falcon launch notes", "company_keyword");
+  delete storage.account;
+  const freeFindings = await window.SentinelDetectors.scan("Project Falcon launch notes");
+  assert(!freeFindings.some((finding) => finding.type === "company_keyword"), "keywords are ignored without a company account");
+  storage.account = { token: "t" };
   await expectType("const customerSecret = fetchSecret();", "source_code");
 
   const gstFindings = await window.SentinelDetectors.scan("27ABCDE1234F1Z5");

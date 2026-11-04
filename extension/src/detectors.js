@@ -138,7 +138,9 @@
         return;
       }
       try {
-        chrome.storage.local.get(["companyKeywords"], (result) => {
+        // Private keywords are an Enterprise feature: only used while a
+        // company account is connected.
+        chrome.storage.local.get(["companyKeywords", "account"], (result) => {
           // chrome.runtime.lastError is set if the context was invalidated
           // between the guard check and the callback firing.
           if (chrome.runtime && chrome.runtime.lastError) {
@@ -146,7 +148,8 @@
             resolve([]);
             return;
           }
-          resolve((result && result.companyKeywords) || []);
+          const connected = Boolean(result && result.account && result.account.token);
+          resolve((connected && result.companyKeywords) || []);
         });
       } catch (err) {
         console.warn("[Preflight] getCompanyKeywords threw —", err.message);

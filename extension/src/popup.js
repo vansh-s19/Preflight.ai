@@ -2,14 +2,23 @@ const DASHBOARD_EVENTS_KEY = "dashboardEvents";
 const SEVERITIES = ["critical", "high", "medium", "low", "none"];
 const HEATMAP_CATEGORIES = ["PII", "Credentials", "Business Sensitive", "Legal Agreements", "Financial Forecasts", "Internal Strategy"];
 
+const SUPPORTED_HOSTS = ["chatgpt.com", "chat.openai.com", "claude.ai"];
+const PAUSE_MS = 60 * 60 * 1000;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
 let dashboardEvents = [];
+let protection = PreflightProtection.normalize(null);
+let currentHost = "";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const result = await chrome.storage.local.get([DASHBOARD_EVENTS_KEY, "companyKeywords"]);
+  const result = await chrome.storage.local.get([DASHBOARD_EVENTS_KEY, "companyKeywords", PreflightProtection.KEY]);
   dashboardEvents = Array.isArray(result[DASHBOARD_EVENTS_KEY])
     ? result[DASHBOARD_EVENTS_KEY]
     : [];
+  protection = PreflightProtection.normalize(result[PreflightProtection.KEY]);
+  currentHost = await activeSupportedHost();
 
+  renderProtection();
   renderDashboard(dashboardEvents);
   document.getElementById("keywords-input").value = (result.companyKeywords || []).join("\n");
 
@@ -17,6 +26,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (PREFLIGHT_CONFIG.DASHBOARD_URL) {
     dashboardButton.addEventListener("click", () => chrome.tabs.create({ url: PREFLIGHT_CONFIG.DASHBOARD_URL }));
   }
+  document.getElementById("plans-btn").addEventListener("click", () => {
+    chrome.tabs.create({ url: `${PREFLIGHT_CONFIG.WEBSITE_URL}#plans` });
+  });
+  document.getElementById("protection-toggle").addEventListener("change", (event) => {
+    saveProtection({ ...protection, enabled: event.target.checked, pausedUntil: 0 });
+  });
+  document.getElementById("pause-btn").addEventListener("click", () => {
+    const paused = PreflightProtection.isPaused(protection);
+    saveProtection({ ...protection, pausedUntil: paused ? 0 : Date.now() + PAUSE_MS });
+  });
+  document.getElementById("site-toggle").addEventListener("change", (event) => {
+    const others = protection.disabledSites.filter((site) => site !== currentHost);
+    saveProtection({ ...protection, disabledSites: event.target.checked ? others : [...others, currentHost] });
+  });
   document.getElementById("export-csv").addEventListener("click", () => exportCsv(dashboardEvents));
   document.getElementById("export-json").addEventListener("click", () => exportJson(dashboardEvents));
   document.getElementById("save-keywords-btn").addEventListener("click", saveKeywords);
@@ -26,6 +49,56 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderAccount(await sendMessage({ type: "PREFLIGHT_GET_STATUS" }));
 });
+
+// Hostname of the active tab when it is a supported AI site. Opening the
+// popup grants activeTab, which is what makes tab.url readable here.
+async function activeSupportedHost() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const host = tab && tab.url ? new URL(tab.url).hostname : "";
+    return SUPPORTED_HOSTS.includes(host) ? host : "";
+  } catch (err) {
+    return "";
+  }
+}
+
+async function saveProtection(next) {
+  protection = PreflightProtection.normalize(next);
+  await chrome.storage.local.set({ [PreflightProtection.KEY]: protection });
+  renderProtection();
+}
+
+function renderProtection() {
+  const paused = protection.enabled && PreflightProtection.isPaused(protection);
+  const siteOff = Boolean(currentHost) && protection.disabledSites.includes(currentHost);
+  const active = protection.enabled && !paused;
+
+  document.querySelector(".protection").classList.toggle("off", !active);
+  document.getElementById("protection-toggle").checked = protection.enabled;
+
+  let title = "Protection is on";
+  let detail = "Checking prompts on ChatGPT and Claude.";
+  if (!protection.enabled) {
+    title = "Protection is off";
+    detail = "Nothing is checked until you turn it back on.";
+  } else if (paused) {
+    const until = new Date(protection.pausedUntil).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    title = "Protection is paused";
+    detail = `Checks resume at ${until}.`;
+  } else if (protection.disabledSites.length > 0) {
+    detail = `Checking prompts, except on ${protection.disabledSites.join(", ")}.`;
+  }
+  setText("protection-title", title);
+  setText("protection-detail", detail);
+
+  const pauseButton = document.getElementById("pause-btn");
+  pauseButton.disabled = !protection.enabled;
+  pauseButton.textContent = paused ? "Resume now" : "Pause for 1 hour";
+
+  document.getElementById("site-row").hidden = !currentHost;
+  document.getElementById("site-toggle").checked = !siteOff;
+  setText("site-name", currentHost);
+}
 
 function sendMessage(message) {
   return new Promise((resolve) => {
@@ -45,15 +118,18 @@ function renderAccount(status) {
   document.getElementById("business-connect").hidden = !apiConfigured || Boolean(account);
   document.getElementById("business-connected").hidden = !account;
   document.getElementById("open-dashboard").hidden = !account || !PREFLIGHT_CONFIG.DASHBOARD_URL;
+  // Keywords, full history, charts and exports are Enterprise features.
+  document.getElementById("enterprise").hidden = !account;
+  document.getElementById("upsell").hidden = Boolean(account);
 
   if (account) {
-    badge.textContent = `Business · ${labelize(account.plan || "connected")}`;
+    badge.textContent = `Enterprise · ${labelize(account.plan || "connected")}`;
     badge.classList.add("business");
     detail.textContent = account.layer2Enabled
       ? "Pattern checks run in your browser. Prompts that pass are also checked by your company's Preflight server. Your admin sees detection counts and types, never prompt text."
       : "All checks run in your browser. Your admin sees detection counts and types, never prompt text.";
   } else {
-    badge.textContent = "Personal · on-device";
+    badge.textContent = "Free · on-device";
     badge.classList.remove("business");
     detail.textContent = "All checks run in your browser. Nothing you type is sent to Preflight.";
   }
@@ -114,6 +190,10 @@ function isWarningEvent(event) {
 
 function renderDashboard(events) {
   const scans = events.filter(isScanEvent);
+  const weekScans = scans.filter((event) => event.timestamp >= Date.now() - WEEK_MS);
+
+  setText("week-scans", weekScans.length);
+  setText("week-catches", weekScans.filter(isWarningEvent).length);
 
   setText("total-scans", scans.length);
   setText("layer1-count", sum(scans, "layer1_detections_count"));

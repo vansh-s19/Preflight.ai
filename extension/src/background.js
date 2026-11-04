@@ -11,7 +11,7 @@
  *    scan metadata are sent to PREFLIGHT_CONFIG.API_BASE_URL.
  */
 
-importScripts("config.js");
+importScripts("config.js", "protection.js");
 
 const DASHBOARD_EVENTS_KEY = "dashboardEvents";
 const PENDING_TELEMETRY_KEY = "pendingTelemetryEvents";
@@ -306,4 +306,29 @@ chrome.alarms.get(FLUSH_ALARM).then((existing) => {
 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === FLUSH_ALARM) flushTelemetryQueue();
+  if (alarm.name === RESUME_ALARM) updateBadge();
 });
+
+// ---------------------------------------------------------------------
+// Toolbar badge: "OFF" while protection is switched off or paused. An
+// alarm clears it when a pause runs out; the content script checks the
+// pause end time itself, so protection resumes even if the alarm is late.
+// ---------------------------------------------------------------------
+const RESUME_ALARM = "preflight-resume";
+
+async function updateBadge() {
+  const { [PreflightProtection.KEY]: stored } = await chrome.storage.local.get([PreflightProtection.KEY]);
+  const settings = PreflightProtection.normalize(stored);
+  const paused = settings.enabled && PreflightProtection.isPaused(settings);
+  const off = !settings.enabled || paused;
+
+  await chrome.action.setBadgeText({ text: off ? "OFF" : "" });
+  if (off) await chrome.action.setBadgeBackgroundColor({ color: "#647084" });
+  if (paused) chrome.alarms.create(RESUME_ALARM, { when: settings.pausedUntil });
+  else chrome.alarms.clear(RESUME_ALARM);
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes[PreflightProtection.KEY]) updateBadge();
+});
+updateBadge();

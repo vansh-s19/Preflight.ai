@@ -5,11 +5,13 @@ sent to ChatGPT or Claude. Supported sites: chatgpt.com, chat.openai.com, claude
 
 ## Modes
 
-| | Personal (B2C) | Business (B2B) |
+| | Free (personal) | Enterprise (business) |
 |---|---|---|
 | Account | None | Company access token, entered in the popup |
 | Pattern checks (Layer 1: PAN, Aadhaar, GSTIN, keys, passwords, files…) | On-device | On-device |
-| Private keywords | Set in the popup | Set in the popup |
+| On/off, pause 1 hour, off per site | Popup | Popup |
+| Popup | Weekly counter | Full history, charts, CSV/JSON export |
+| Private keywords | — | Set in the popup |
 | AI checks (Layer 2) | Off | On if the org's plan includes it (prompt text goes to the company's Preflight server) |
 | Telemetry | None. History stays in `chrome.storage.local` | Metadata only (finding types, severity, action, timing). Never prompt text or page titles |
 

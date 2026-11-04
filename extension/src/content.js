@@ -84,6 +84,21 @@
   // corresponding DOM event, it stays queued here until the next send.
   let pendingAttachments = [];
 
+  // On/off, pause and per-site settings from the popup. Cached here because
+  // handleSendAttempt must decide synchronously whether to intercept.
+  // Until storage answers, protection stays on.
+  let protection = PreflightProtection.normalize(null);
+  try {
+    chrome.storage.local.get([PreflightProtection.KEY], (result) => {
+      if (!chrome.runtime.lastError) protection = PreflightProtection.normalize(result[PreflightProtection.KEY]);
+    });
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && changes[PreflightProtection.KEY]) {
+        protection = PreflightProtection.normalize(changes[PreflightProtection.KEY].newValue);
+      }
+    });
+  } catch (err) { /* extension context invalidated: keep protection on */ }
+
   function attachmentKey(file) {
     return `${file.name}:${file.size}:${file.lastModified}`;
   }
@@ -324,6 +339,13 @@
         }, 0);
       }
       return; // do not preventDefault — allow native send
+    }
+
+    // Switched off, paused, or off for this site: let the site send as usual.
+    // Files picked meanwhile are dropped so they aren't checked on a later send.
+    if (!PreflightProtection.isActive(protection, location.hostname)) {
+      pendingAttachments = [];
+      return;
     }
 
     const text = getInputText(inputBox);

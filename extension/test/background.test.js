@@ -11,6 +11,8 @@ function loadBackground(apiBaseUrl) {
   const store = {};
   const fetchCalls = [];
   let onMessage = null;
+  const storageListeners = [];
+  const badge = { text: "" };
 
   const chrome = {
     runtime: {
@@ -21,13 +23,24 @@ function loadBackground(apiBaseUrl) {
     storage: {
       local: {
         get: async (keys) => Object.fromEntries(keys.filter((k) => k in store).map((k) => [k, store[k]])),
-        set: async (values) => { Object.assign(store, JSON.parse(JSON.stringify(values))); },
+        set: async (values) => {
+          const copy = JSON.parse(JSON.stringify(values));
+          Object.assign(store, copy);
+          const changes = Object.fromEntries(Object.entries(copy).map(([k, v]) => [k, { newValue: v }]));
+          storageListeners.forEach((fn) => fn(changes, "local"));
+        },
         remove: async (keys) => { keys.forEach((k) => delete store[k]); },
       },
+      onChanged: { addListener: (fn) => storageListeners.push(fn) },
+    },
+    action: {
+      setBadgeText: async ({ text }) => { badge.text = text; },
+      setBadgeBackgroundColor: async () => {},
     },
     alarms: {
       get: async () => null,
       create: () => {},
+      clear: () => {},
       onAlarm: { addListener: () => {} },
     },
   };
@@ -44,13 +57,14 @@ function loadBackground(apiBaseUrl) {
     return { ok: true, status: 200, json: async () => ({}) };
   }
 
+  const protection = readFileSync(join(srcDir, "protection.js"), "utf8");
   const config = readFileSync(join(srcDir, "config.js"), "utf8")
     .replace(/API_BASE_URL: "[^"]*"/, `API_BASE_URL: ${JSON.stringify(apiBaseUrl)}`);
   const background = readFileSync(join(srcDir, "background.js"), "utf8");
   const context = vm.createContext({
     chrome, fetch, AbortController, setTimeout, clearTimeout, console,
     navigator: { userAgent: "Chrome/130" },
-    importScripts: () => vm.runInContext(config, context),
+    importScripts: () => { vm.runInContext(config, context); vm.runInContext(protection, context); },
   });
   vm.runInContext(background, context);
 
@@ -61,7 +75,7 @@ function loadBackground(apiBaseUrl) {
     });
   }
 
-  return { store, fetchCalls, send };
+  return { store, fetchCalls, send, badge, setStorage: chrome.storage.local.set };
 }
 
 const scanEvent = {
@@ -127,6 +141,30 @@ const scanEvent = {
 
     await bg.send({ type: "PREFLIGHT_DISCONNECT" });
     assert.equal(bg.store.account, undefined);
+  }
+
+  // Toolbar badge follows the on/off and pause settings.
+  {
+    const bg = loadBackground("");
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+    await bg.send({ type: "PREFLIGHT_GET_STATUS" });
+    await settle();
+    assert.equal(bg.badge.text, "", "no badge while protection is on");
+
+    const setProtection = async (protection) => {
+      await bg.setStorage({ protection });
+      await settle();
+      await settle();
+    };
+
+    await setProtection({ enabled: false });
+    assert.equal(bg.badge.text, "OFF", "badge shows OFF when switched off");
+
+    await setProtection({ enabled: true, pausedUntil: Date.now() + 60_000 });
+    assert.equal(bg.badge.text, "OFF", "badge shows OFF while paused");
+
+    await setProtection({ enabled: true, pausedUntil: Date.now() - 1 });
+    assert.equal(bg.badge.text, "", "badge clears once the pause has ended");
   }
 
   console.log("background: all tests passed");
