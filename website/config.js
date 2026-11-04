@@ -3,5 +3,5 @@
 //  - contactEmail empty: contact links are hidden and Enterprise shows "Coming soon".
 window.PREFLIGHT_SITE = {
   chromeWebStoreUrl: "", // e.g. "https://chromewebstore.google.com/detail/preflight-ai/<extension-id>"
-  contactEmail: "vanshsaxena1901@gmail.com",
+  contactEmail: "support@preflightai.in",
 };
