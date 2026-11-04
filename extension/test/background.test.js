@@ -12,7 +12,9 @@ function loadBackground(apiBaseUrl) {
   const fetchCalls = [];
   let onMessage = null;
   const storageListeners = [];
-  const badge = { text: "" };
+  const badge = { text: "", tabs: {} };
+  const sessionStore = {};
+  const tabRemovedListeners = [];
 
   const chrome = {
     runtime: {
@@ -31,12 +33,21 @@ function loadBackground(apiBaseUrl) {
         },
         remove: async (keys) => { keys.forEach((k) => delete store[k]); },
       },
+      session: {
+        get: async (keys) => Object.fromEntries(keys.filter((k) => k in sessionStore).map((k) => [k, sessionStore[k]])),
+        set: async (values) => { Object.assign(sessionStore, JSON.parse(JSON.stringify(values))); },
+      },
       onChanged: { addListener: (fn) => storageListeners.push(fn) },
     },
     action: {
-      setBadgeText: async ({ text }) => { badge.text = text; },
+      setBadgeText: async ({ tabId, text }) => {
+        if (tabId === undefined) badge.text = text;
+        else badge.tabs[tabId] = text;
+      },
       setBadgeBackgroundColor: async () => {},
+      setTitle: async () => {},
     },
+    tabs: { onRemoved: { addListener: (fn) => { tabRemovedListeners.push(fn); } } },
     alarms: {
       get: async () => null,
       create: () => {},
@@ -75,7 +86,7 @@ function loadBackground(apiBaseUrl) {
     });
   }
 
-  return { store, fetchCalls, send, badge, setStorage: chrome.storage.local.set };
+  return { store, sessionStore, fetchCalls, send, badge, setStorage: chrome.storage.local.set, tabRemovedListeners };
 }
 
 const scanEvent = {
@@ -165,6 +176,26 @@ const scanEvent = {
 
     await setProtection({ enabled: true, pausedUntil: Date.now() - 1 });
     assert.equal(bg.badge.text, "", "badge clears once the pause has ended");
+  }
+
+  // A tab whose composer can't be found gets its own "!" badge.
+  {
+    const bg = loadBackground("");
+    const tab = { id: "test-extension", tab: { id: 7 } };
+    await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "broken" }, tab);
+    assert.equal(bg.badge.tabs[7], "!", "broken tab is flagged");
+    assert.equal(bg.sessionStore.tabHealth["7"], "broken");
+
+    await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "ok" }, tab);
+    assert.equal(bg.badge.tabs[7], null, "recovered tab falls back to the global badge");
+    assert.equal("7" in bg.sessionStore.tabHealth, false);
+
+    const bad = await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "<b>" }, tab);
+    assert.equal(bad.success, false, "unknown statuses are rejected");
+
+    await bg.send({ type: "PREFLIGHT_SITE_HEALTH", status: "broken" }, tab);
+    await bg.tabRemovedListeners[0](7);
+    assert.equal("7" in bg.sessionStore.tabHealth, false, "closed tabs are forgotten");
   }
 
   console.log("background: all tests passed");

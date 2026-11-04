@@ -270,6 +270,21 @@
     return pickComposer([...document.querySelectorAll(sel.inputBox)]);
   }
 
+  // Used when the site's own send-button selector stops matching after a
+  // redesign: a button labelled "send" that sits near a visible composer.
+  const GENERIC_SEND_BUTTON = 'button[aria-label*="send" i], button[data-testid*="send" i]';
+
+  function genericSendFromClick(target) {
+    const button = target.closest(GENERIC_SEND_BUTTON);
+    if (!button) return null;
+    let scope = button.parentElement;
+    for (let depth = 0; scope && depth < 6; depth += 1, scope = scope.parentElement) {
+      const editors = [...scope.querySelectorAll(GENERIC_EDITOR)].filter(isVisible);
+      if (editors.length > 0) return { button, inputBox: pickComposer(editors) };
+    }
+    return null;
+  }
+
   function composerFromEvent(event) {
     const path = event.composedPath().filter((node) => node instanceof Element);
     const known = path.find((node) => node.matches(sel.inputBox));
@@ -280,12 +295,14 @@
 
   function attachInterceptors() {
     window.addEventListener("click", (event) => {
-      const sendButton = event.target instanceof Element
-        ? event.target.closest(sel.sendButton)
-        : null;
-      if (!sendButton) return;
-
-      handleSendAttempt(event, findInputBox(sendButton), sendButton);
+      if (!(event.target instanceof Element)) return;
+      const sendButton = event.target.closest(sel.sendButton);
+      if (sendButton) {
+        handleSendAttempt(event, findInputBox(sendButton), sendButton);
+        return;
+      }
+      const fallback = genericSendFromClick(event.target);
+      if (fallback) handleSendAttempt(event, fallback.inputBox, fallback.button);
     }, true);
 
     window.addEventListener("keydown", (event) => {
@@ -790,10 +807,59 @@
   }
 
   // ---------------------------------------------------------------------
+  // Self-check. On a page that should have a chat composer, report whether
+  // the site's known composer can be found. When it can't, the site's
+  // layout has probably changed and sends may slip through unchecked, so
+  // the background flags the toolbar icon for this tab. Other pages
+  // (settings, login, GPT store) report "unknown" and are never flagged.
+  // ---------------------------------------------------------------------
+  const CHAT_PATHS = {
+    chatgpt: /^\/(?:c\/[^/]+|g\/[^/]+(?:\/c\/[^/]+)?)?\/?$/,
+    claude: /^\/(?:new|chat\/[^/]+|project\/[^/]+)\/?$/,
+  };
+  const HEALTH_INTERVAL_MS = 4000;
+  const HEALTH_GRACE_MS = 10000; // the composer renders after the app boots
+  let lastHealth = "";
+  let composerMissingSince = 0;
+
+  function checkHealth() {
+    let status = "unknown";
+    if (PreflightProtection.isActive(protection, location.hostname) && CHAT_PATHS[SITE].test(location.pathname)) {
+      if ([...document.querySelectorAll(sel.inputBox)].some(isVisible)) {
+        composerMissingSince = 0;
+        status = "ok";
+      } else {
+        composerMissingSince = composerMissingSince || Date.now();
+        status = Date.now() - composerMissingSince >= HEALTH_GRACE_MS ? "broken" : lastHealth || "unknown";
+      }
+    } else {
+      composerMissingSince = 0;
+    }
+
+    if (status === lastHealth) return;
+    lastHealth = status;
+    try {
+      chrome.runtime.sendMessage({ type: "PREFLIGHT_SITE_HEALTH", status }, () => void chrome.runtime.lastError);
+    } catch (err) { /* extension context invalidated */ }
+  }
+
+  function startHealthChecks() {
+    checkHealth();
+    setInterval(checkHealth, HEALTH_INTERVAL_MS);
+  }
+
+  // ---------------------------------------------------------------------
   // Boot
   // ---------------------------------------------------------------------
   attachInterceptors();
   // Content scripts run at document_start (see manifest), before <body> exists.
-  if (document.body) observeResponses();
-  else document.addEventListener("DOMContentLoaded", observeResponses, { once: true });
+  if (document.body) {
+    observeResponses();
+    startHealthChecks();
+  } else {
+    document.addEventListener("DOMContentLoaded", () => {
+      observeResponses();
+      startHealthChecks();
+    }, { once: true });
+  }
 })();

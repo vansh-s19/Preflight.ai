@@ -365,6 +365,15 @@
     .upsell p { color: var(--muted); line-height: 1.4; }
     .upsell .link { justify-self: start; color: var(--info); }
 
+    .site-warning {
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #fff4ed;
+      color: var(--danger);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
     button:disabled { opacity: .5; cursor: default; }
   </style>
 </head>
@@ -391,6 +400,7 @@
           <span aria-hidden="true"></span>
         </label>
       </div>
+      <p id="site-warning" class="site-warning" role="status" hidden>Preflight can't find the message box on this page, so checks may not run. Try reloading. If it keeps happening, the site has likely changed and Preflight needs an update.</p>
       <button id="pause-btn" type="button">Pause for 1 hour</button>
       <label id="site-row" class="check-row" hidden>
         <input id="site-toggle" type="checkbox" checked />

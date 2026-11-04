@@ -239,6 +239,7 @@ const HANDLERS = {
   }),
   PREFLIGHT_CONNECT: (message) => connectAccount(message.token),
   PREFLIGHT_DISCONNECT: () => disconnectAccount(),
+  PREFLIGHT_SITE_HEALTH: (message, sender) => setTabHealth(sender.tab?.id, message.status),
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -246,7 +247,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return false;
   const handler = HANDLERS[message?.type];
   if (!handler) return false;
-  handler(message)
+  handler(message, sender)
     .then((result) => sendResponse(result))
     .catch((err) => sendResponse({ success: false, error: err?.message || "handler_error" }));
   // Keep the channel open for the async response.
@@ -332,3 +333,37 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes[PreflightProtection.KEY]) updateBadge();
 });
 updateBadge();
+
+// ---------------------------------------------------------------------
+// Per-tab warning when the content script can't find the site's composer
+// (see checkHealth in content.js). A tab's badge overrides the global one;
+// null hands the tab back to the global "OFF"/blank badge. Statuses are
+// kept in session storage so the popup can explain the warning.
+// ---------------------------------------------------------------------
+const TAB_HEALTH_KEY = "tabHealth";
+const HEALTH_STATUSES = new Set(["ok", "broken", "unknown"]);
+
+async function setTabHealth(tabId, status) {
+  if (!Number.isInteger(tabId) || !HEALTH_STATUSES.has(status)) return { success: false, error: "invalid_request" };
+  const broken = status === "broken";
+
+  await chrome.action.setBadgeText({ tabId, text: broken ? "!" : null });
+  if (broken) await chrome.action.setBadgeBackgroundColor({ tabId, color: "#c2410c" });
+  await chrome.action.setTitle({
+    tabId,
+    title: broken ? "Preflight.ai: can't find the message box on this page. Checks may not run." : "Preflight.ai",
+  });
+
+  const { [TAB_HEALTH_KEY]: health = {} } = await chrome.storage.session.get([TAB_HEALTH_KEY]);
+  if (broken) health[tabId] = status;
+  else delete health[tabId];
+  await chrome.storage.session.set({ [TAB_HEALTH_KEY]: health });
+  return { success: true };
+}
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const { [TAB_HEALTH_KEY]: health = {} } = await chrome.storage.session.get([TAB_HEALTH_KEY]);
+  if (!(tabId in health)) return;
+  delete health[tabId];
+  await chrome.storage.session.set({ [TAB_HEALTH_KEY]: health });
+});

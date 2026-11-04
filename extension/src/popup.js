@@ -9,6 +9,7 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 let dashboardEvents = [];
 let protection = PreflightProtection.normalize(null);
 let currentHost = "";
+let currentTabId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   const result = await chrome.storage.local.get([DASHBOARD_EVENTS_KEY, "companyKeywords", PreflightProtection.KEY]);
@@ -19,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   currentHost = await activeSupportedHost();
 
   renderProtection();
+  renderSiteWarning();
   renderDashboard(dashboardEvents);
   document.getElementById("keywords-input").value = (result.companyKeywords || []).join("\n");
 
@@ -55,11 +57,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function activeSupportedHost() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    currentTabId = tab ? tab.id : null;
     const host = tab && tab.url ? new URL(tab.url).hostname : "";
     return SUPPORTED_HOSTS.includes(host) ? host : "";
   } catch (err) {
     return "";
   }
+}
+
+// Explains the "!" toolbar badge set when content.js can't find the composer.
+async function renderSiteWarning() {
+  if (!currentHost || currentTabId === null) return;
+  const { tabHealth = {} } = await chrome.storage.session.get(["tabHealth"]);
+  document.getElementById("site-warning").hidden = tabHealth[currentTabId] !== "broken";
 }
 
 async function saveProtection(next) {
