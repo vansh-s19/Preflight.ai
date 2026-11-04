@@ -1,0 +1,11 @@
+dist/
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.sqlite3
+.DS_Store
+backend/saved_models/
+.claude/settings.local.json
+Screenshot*.png
+backend/data/
