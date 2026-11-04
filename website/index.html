@@ -90,50 +90,73 @@
         </div>
 
         <div class="hero-visual">
-          <!-- Live demo, driven by demo.js. The markup below is the static
-               fallback (no JS / reduced motion): the warning moment. -->
-          <div class="window demo" data-demo role="img" aria-label="Demo: someone types a prompt containing a PAN, a bank account number and an API key into ChatGPT and clicks send. Preflight shows a warning, they click Replace with Safe Data, the values become placeholders, and the safe prompt is sent.">
-            <div class="window-bar" aria-hidden="true">
-              <span class="window-dots"><i></i><i></i><i></i></span>
-              <span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span>
-            </div>
-            <div class="window-body" aria-hidden="true">
-              <div class="chat-area" data-demo-chat>
-                <div class="chat-bubble">Can you help me with client emails this week?</div>
-                <div class="assistant-reply"><span class="assistant-avatar"></span>Of course! Share the details and I'll draft each one for you.</div>
-              </div>
-              <div class="composer">
-                <div class="composer-text" data-demo-text>Draft a payment reminder for our client. His PAN is <mark class="hit">ABCDE1234F</mark> and Account Number: <mark class="hit">50100234567890</mark>. Test it with our key <mark class="hit">sk-proj-a81F…kQ2</mark></div>
-                <span class="composer-send" data-demo-send><svg><use href="#i-arrow" /></svg></span>
-              </div>
-            </div>
-            <div class="demo-scrim is-on" data-demo-scrim aria-hidden="true"></div>
-            <div class="demo-toast" data-demo-toast aria-hidden="true"><svg><use href="#i-check" /></svg><span data-demo-toast-text>3 items protected</span></div>
+          <!-- A laptop running ChatGPT in Chrome. The live demo inside is
+               driven by demo.js; the markup below is the static fallback
+               (no JS / reduced motion): the warning moment. -->
+          <div class="laptop">
+            <div class="laptop-lid">
+              <span class="laptop-camera" aria-hidden="true"></span>
+              <div class="laptop-screen">
+                <div class="window demo" data-demo role="img" aria-label="Demo: someone types a prompt containing a PAN, a bank account number and an API key into ChatGPT in Chrome and clicks send. Preflight shows a warning, they click Replace with Safe Data, the values become placeholders, and the safe prompt is sent.">
+                  <div class="window-bar" aria-hidden="true">
+                    <div class="browser-tabs">
+                      <span class="window-dots"><i></i><i></i><i></i></span>
+                      <span class="browser-tab"><span class="browser-favicon"></span>ChatGPT<svg><use href="#i-x" /></svg></span>
+                      <svg class="browser-newtab"><use href="#i-plus" /></svg>
+                    </div>
+                    <div class="browser-toolbar">
+                      <span class="browser-nav">
+                        <svg class="browser-back"><use href="#i-arrow" /></svg>
+                        <svg class="browser-forward"><use href="#i-arrow" /></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg>
+                      </span>
+                      <span class="window-url"><svg><use href="#i-lock" /></svg>chatgpt.com</span>
+                      <span class="browser-ext"><svg><use href="#logo" /></svg><i></i></span>
+                      <span class="browser-profile"></span>
+                    </div>
+                  </div>
+                  <div class="page-head" aria-hidden="true">ChatGPT<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg></div>
+                  <div class="window-body" aria-hidden="true">
+                    <div class="chat-area" data-demo-chat>
+                      <div class="chat-bubble">Can you help me with client emails this week?</div>
+                      <div class="assistant-reply"><span class="assistant-avatar"></span>Of course! Share the details and I'll draft each one for you.</div>
+                    </div>
+                    <div class="composer">
+                      <div class="composer-text" data-demo-text>Draft a payment reminder for our client. His PAN is <mark class="hit">ABCDE1234F</mark> and Account Number: <mark class="hit">50100234567890</mark>. Test it with our key <mark class="hit">sk-proj-a81F…kQ2</mark></div>
+                      <span class="composer-send" data-demo-send><svg><use href="#i-arrow" /></svg></span>
+                    </div>
+                  </div>
+                  <div class="demo-scrim is-on" data-demo-scrim aria-hidden="true"></div>
+                  <div class="demo-toast" data-demo-toast aria-hidden="true"><svg><use href="#i-check" /></svg><span data-demo-toast-text>3 items protected</span></div>
 
-            <div class="alert-card is-open" data-demo-card aria-hidden="true">
-              <div class="alert-head">
-                <span class="alert-icon"><svg aria-hidden="true"><use href="#i-alert" /></svg></span>
-                <div>
-                  <strong>Sensitive Data Detected</strong>
-                  <span>Review the details before proceeding.</span>
+                  <div class="alert-card is-open" data-demo-card aria-hidden="true">
+                    <div class="alert-head">
+                      <span class="alert-icon"><svg aria-hidden="true"><use href="#i-alert" /></svg></span>
+                      <div>
+                        <strong>Sensitive Data Detected</strong>
+                        <span>Review the details before proceeding.</span>
+                      </div>
+                      <span class="risk-badge">Critical</span>
+                    </div>
+                    <ul class="alert-list">
+                      <li><span>PAN Number</span><code>[SYNTHETIC_PAN]</code></li>
+                      <li><span>Bank Account Number</span><code>[SYNTHETIC_BANK_ACCOUNT]</code></li>
+                      <li><span>OpenAI API Key</span><code>[REDACTED_OPENAI_KEY]</code></li>
+                    </ul>
+                    <div class="alert-actions">
+                      <span class="fake-btn fake-btn-primary" data-demo-replace><svg aria-hidden="true"><use href="#i-shield" /></svg>Replace with Safe Data</span>
+                      <span class="fake-btn">Send Anyway</span>
+                    </div>
+                  </div>
+
+                  <div class="demo-cursor" data-demo-cursor aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 3.5 19 12l-6.4 1.5L9.4 19.6Z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" /></svg>
+                    <span class="demo-ripple"></span>
+                  </div>
                 </div>
-                <span class="risk-badge">Critical</span>
-              </div>
-              <ul class="alert-list">
-                <li><span>PAN Number</span><code>[SYNTHETIC_PAN]</code></li>
-                <li><span>Bank Account Number</span><code>[SYNTHETIC_BANK_ACCOUNT]</code></li>
-                <li><span>OpenAI API Key</span><code>[REDACTED_OPENAI_KEY]</code></li>
-              </ul>
-              <div class="alert-actions">
-                <span class="fake-btn fake-btn-primary" data-demo-replace><svg aria-hidden="true"><use href="#i-shield" /></svg>Replace with Safe Data</span>
-                <span class="fake-btn">Send Anyway</span>
               </div>
             </div>
-
-            <div class="demo-cursor" data-demo-cursor aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M5 3.5 19 12l-6.4 1.5L9.4 19.6Z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" /></svg>
-              <span class="demo-ripple"></span>
-            </div>
+            <div class="laptop-base" aria-hidden="true"></div>
           </div>
 
           <div class="hero-float hero-float-status" aria-hidden="true">

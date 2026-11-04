@@ -148,7 +148,8 @@ code { font-family: var(--mono); font-size: 0.86em; }
   mask-image: radial-gradient(55% 60% at 74% 50%, #000, transparent 75%);
   pointer-events: none;
 }
-.hero-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 64px; align-items: center; }
+/* Wider than the page container so the laptop gets room beside the copy. */
+.hero-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 48px; align-items: center; width: min(1280px, 100% - 64px); }
 
 h1 {
   font-family: var(--display);
@@ -163,12 +164,12 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 12px;
+  gap: 10px;
   margin: 32px 0 0;
   padding: 0;
   list-style: none;
   color: var(--ink-soft);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 500;
 }
 .steps-inline li { display: inline-flex; align-items: center; gap: 8px; }
@@ -206,33 +207,71 @@ h1 {
 }
 .hero-float b { display: block; font-size: 13px; line-height: 1.3; }
 .hero-float small { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.3; }
-.hero-float-status { top: -26px; left: -40px; }
-.hero-float-local { right: -28px; bottom: -30px; animation-delay: -2.5s; }
+/* Perched on the lid's top edge, clear of the screen. */
+.hero-float-status { top: -40px; left: 8%; }
+.hero-float-local { right: 2%; bottom: -34px; animation-delay: -2.5s; }
 .hero-float-logo { width: 30px; height: 30px; }
 .hero-float-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--green-tint); color: var(--green); }
 .hero-float-icon svg { width: 15px; height: 15px; }
 .live-dot { width: 8px; height: 8px; margin-left: 4px; border-radius: 50%; background: var(--green-bright); box-shadow: 0 0 0 0 rgb(34 197 94 / 0.5); animation: live 1.8s ease-out infinite; }
 @keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 @keyframes live { to { box-shadow: 0 0 0 8px rgb(34 197 94 / 0); } }
-.window {
+/* A laptop: dark bezel and an aluminium base, holding a Chrome window. */
+.laptop { position: relative; }
+.laptop-lid {
   position: relative;
-  border-radius: 16px;
+  padding: 12px 12px 14px;
+  border-radius: 20px 20px 8px 8px;
+  background: #0e0f12;
+  box-shadow: 0 0 0 1.5px #c5c8ce, 0 0 0 3px #eceef1, 0 40px 70px -30px rgb(15 23 42 / 0.45);
+}
+.laptop-camera { position: absolute; top: 4px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #2b2e35; box-shadow: inset 0 0 0 1px #40444d; transform: translateX(-50%); }
+.laptop-screen { aspect-ratio: 16 / 10; border-radius: 7px; overflow: hidden; background: #fff; }
+.laptop-base {
+  position: relative;
+  height: 16px;
+  margin: 0 -7%;
+  border-radius: 3px 3px 18px 18px / 3px 3px 12px 12px;
+  background: linear-gradient(180deg, #f4f5f7 0%, #dcdee2 35%, #b3b6bc 100%);
+  box-shadow: inset 0 1px 0 #fff, 0 24px 30px -14px rgb(15 23 42 / 0.4);
+}
+/* The notch you lift the lid with. */
+.laptop-base::before { content: ""; position: absolute; top: 0; left: 50%; width: 15%; height: 6px; border-radius: 0 0 9px 9px; background: linear-gradient(180deg, #b6b9bf, #d8dadf); transform: translateX(-50%); }
+
+.window {
+  --bar-h: 70px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: var(--card);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid rgb(15 23 42 / 0.06);
   overflow: hidden;
   isolation: isolate;
 }
-.window-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  height: 42px;
-  padding: 0 14px;
-  border-bottom: 1px solid var(--line);
-  background: #f8fafc;
-  border-radius: 16px 16px 0 0;
-}
+/* Chrome: a tab strip over a toolbar. */
+.window-bar { flex: none; height: var(--bar-h); background: #dfe3e9; }
+.browser-tabs { display: flex; align-items: flex-end; gap: 10px; height: 34px; padding: 0 12px; }
+.window .window-dots { align-self: center; margin-right: 6px; }
+.window .window-dots i:nth-child(1) { background: #ff5f57; }
+.window .window-dots i:nth-child(2) { background: #febc2e; }
+.window .window-dots i:nth-child(3) { background: #28c840; }
+.browser-tab { display: inline-flex; align-items: center; gap: 8px; width: 190px; height: 28px; padding: 0 10px; border-radius: 9px 9px 0 0; background: #fff; color: var(--ink); font-size: 11.5px; font-weight: 500; }
+.browser-tab svg { width: 10px; height: 10px; margin-left: auto; color: var(--muted); }
+.browser-favicon { flex: none; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle, #fff 0 2.5px, transparent 3px), var(--ink); }
+.browser-newtab { align-self: center; width: 13px; height: 13px; color: #5f6368; }
+.browser-toolbar { display: flex; align-items: center; gap: 12px; height: calc(var(--bar-h) - 34px); padding: 0 12px; background: #fff; border-bottom: 1px solid var(--line); }
+.browser-nav { display: flex; gap: 10px; color: #5f6368; }
+.browser-nav svg { width: 14px; height: 14px; }
+.browser-back { transform: rotate(180deg); }
+.browser-forward { opacity: 0.35; }
+.window .window-url { flex: 1; justify-content: flex-start; height: 24px; margin: 0; padding: 0 12px; border: 0; border-radius: 999px; background: #eef1f5; color: var(--ink-soft); }
+.browser-ext { position: relative; display: grid; place-items: center; width: 22px; height: 22px; }
+.browser-ext svg { width: 16px; height: 16px; }
+.browser-ext i { position: absolute; right: 0; bottom: 1px; width: 7px; height: 7px; border-radius: 50%; background: var(--green-bright); box-shadow: 0 0 0 1.5px #fff; }
+.browser-profile { flex: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #fbbf24, #f97316); }
+.page-head { flex: none; display: flex; align-items: center; gap: 4px; padding: 12px 18px 0; color: var(--ink); font-size: 14px; font-weight: 600; }
+.page-head svg { width: 14px; height: 14px; color: var(--muted); }
+
 .window-dots { display: flex; gap: 6px; }
 .window-dots i { width: 10px; height: 10px; border-radius: 50%; background: #e2e8f0; }
 .window-url {
@@ -249,12 +288,19 @@ h1 {
 }
 .window-url svg { width: 12px; height: 12px; }
 .window-body {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  height: 440px;
-  padding: 20px;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+  margin-inline: auto;
+  padding: 8px 22px 16px;
 }
+.window .chat-bubble, .window .assistant-reply, .window .composer { font-size: 13px; }
+/* Older messages fade out under the page header instead of being cut. */
+.window .chat-area { -webkit-mask-image: linear-gradient(transparent, #000 28px); mask-image: linear-gradient(transparent, #000 28px); }
 .chat-area {
   flex: 1;
   min-height: 0;
@@ -329,7 +375,7 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
   position: absolute;
   z-index: 3;
   left: 50%;
-  top: calc(42px + (100% - 42px) / 2);
+  top: calc(var(--bar-h) + (100% - var(--bar-h)) / 2);
   width: min(380px, 92%);
   transform: translate(-50%, -46%) scale(0.97);
   border-radius: 16px;
@@ -401,7 +447,7 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 .demo-scrim {
   position: absolute;
   z-index: 2;
-  inset: 42px 0 0;
+  inset: var(--bar-h) 0 0;
   background: rgb(15 23 42 / 0.16);
   backdrop-filter: blur(1.5px);
   -webkit-backdrop-filter: blur(1.5px);
@@ -412,7 +458,7 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 .demo-toast {
   position: absolute;
   z-index: 3;
-  top: 56px;
+  top: calc(var(--bar-h) + 12px);
   left: 50%;
   display: inline-flex;
   align-items: center;
@@ -909,17 +955,23 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 }
 
 @media (max-width: 1080px) {
-  .hero-float-local { right: 12px; }
   .how-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* Too narrow for the laptop beside the copy: it moves underneath. */
+@media (max-width: 1100px) {
+  .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 56px; }
+  .hero-visual { width: min(760px, 100%); margin-inline: auto; padding-inline: 6%; }
+  .hero-float-status { left: 0; }
+  .hero-float-local { right: 0; }
+}
+
 @media (max-width: 860px) {
-  .hero-float-status { left: 12px; }
   /* Sized so "Catch leaks before" always fits on its line. */
   h1 { font-size: clamp(32px, 10vw, 56px); }
   .hero { padding: 108px 0 64px; }
   .privacy-panel { padding: 72px 0; }
-  .hero-grid { grid-template-columns: 1fr; gap: 44px; }
+  .hero-grid { gap: 44px; width: min(1280px, 100% - 32px); }
   .nav-links { display: none; }
   .nav-inner > .btn { margin-left: auto; }
   .compare { grid-template-columns: 1fr; }
@@ -931,8 +983,15 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
 @media (max-width: 560px) {
   .bento { grid-template-columns: minmax(0, 1fr); }
   .how-grid { grid-template-columns: minmax(0, 1fr); }
+  /* A laptop this small is unreadable, so phones get the Chrome window alone. */
+  .hero-grid { gap: 80px; }
+  .hero-visual { padding-inline: 0; }
+  .laptop-lid { padding: 0; border-radius: 16px; background: none; box-shadow: var(--shadow-lg); }
+  .laptop-camera, .laptop-base, .browser-nav, .browser-profile { display: none; }
+  .laptop-screen { aspect-ratio: auto; height: 540px; border-radius: 16px; border: 1px solid rgb(15 23 42 / 0.08); }
+  .browser-tab { width: 150px; }
   /* Sit above the window so the address bar stays readable. */
-  .hero-float-status { top: -44px; }
+  .hero-float-status { top: -58px; }
   .bento-wide { grid-column: auto; }
   .bento-visual { height: auto; min-height: 210px; }
   .privacy-panel { width: calc(100% - 16px); border-radius: 24px; }
@@ -946,7 +1005,7 @@ mark.safe { background: var(--green-tint); color: var(--green-ink); font-family:
   .flow-node-off { align-self: center; }
   .history-when { display: none; }
   .history-row { grid-template-columns: 1fr auto; }
-  .window-body { height: 440px; padding: 16px; }
+  .window-body { padding: 8px 16px 16px; }
   .chat-bubble { max-width: 100%; font-size: 13px; }
   .alert-actions { grid-template-columns: 1fr; }
   .alert-head div span { display: none; }
