@@ -9,3 +9,5 @@ backend/saved_models/
 .claude/settings.local.json
 Screenshot*.png
 backend/data/
+# ...but keep the Web Store screenshots.
+!store/assets/*.png
