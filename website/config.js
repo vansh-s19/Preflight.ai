@@ -2,6 +2,6 @@
 //  - chromeWebStoreUrl empty: install buttons show "Coming soon to Chrome".
 //  - contactEmail empty: contact links are hidden and Enterprise shows "Coming soon".
 window.PREFLIGHT_SITE = {
-  chromeWebStoreUrl: "", // e.g. "https://chromewebstore.google.com/detail/preflight-ai/<extension-id>"
+  chromeWebStoreUrl: "https://chromewebstore.google.com/detail/preflightai/cnddnafdhjmibfbielheaepjgblkjbjn",
   contactEmail: "support@preflightai.in",
 };
