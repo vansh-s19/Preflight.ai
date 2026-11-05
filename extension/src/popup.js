@@ -114,6 +114,9 @@ function renderDetectorChecks() {
         </label>`).join("")}
     </div>`).join("");
   setText("ignored-count", detectorPrefs.ignoredHashes.length);
+  const total = window.SentinelDetectors.DETECTOR_TYPES.length;
+  const on = window.SentinelDetectors.DETECTOR_TYPES.filter((detector) => !disabled.has(detector.type)).length;
+  setText("checks-summary", on === total ? `All ${total} on` : `${on} of ${total} on`);
   document.getElementById("clear-ignored-btn").hidden = detectorPrefs.ignoredHashes.length === 0;
 }
 
@@ -126,9 +129,11 @@ async function saveProtection(next) {
 function renderProtection() {
   const paused = protection.enabled && PreflightProtection.isPaused(protection);
   const siteOff = Boolean(currentHost) && protection.disabledSites.includes(currentHost);
-  const active = protection.enabled && !paused;
 
-  document.querySelector(".protection").classList.toggle("off", !active);
+  const card = document.querySelector(".protection");
+  card.classList.toggle("off", !protection.enabled);
+  card.classList.toggle("paused", paused);
+  setText("protection-status", !protection.enabled ? "Off" : paused ? "Paused" : siteOff ? "Off on this site" : currentHost ? `Watching ${currentHost}` : "Active");
   document.getElementById("protection-toggle").checked = protection.enabled;
 
   let title = "Protection is on";
