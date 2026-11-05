@@ -19,7 +19,7 @@ Everything needed to fill in the Chrome Web Store developer dashboard for the
 
 | Field | Value |
 |---|---|
-| Package | `dist/preflight-ai-1.0.0.zip` |
+| Package | `dist/preflight-ai-<version>.zip` (currently 1.0.1) |
 | Visibility | Public |
 | Regions | All regions |
 | Pricing | Free |
@@ -53,6 +53,7 @@ WHAT IT CATCHES
 • Phone numbers and email addresses
 • API keys and secrets: OpenAI, Anthropic, AWS, JWTs, private keys, database connection strings, passwords and .env values
 • Sensitive file types and source code pasted as text
+• Scans and photos it can't read: it asks you to check them yourself
 
 PRIVATE BY DESIGN
 • Every check runs inside your browser. The free version makes no network requests: nothing you type is sent to us or anyone else.
@@ -104,7 +105,7 @@ Preflight.ai warns users before sensitive personal data, credentials or confiden
 | `storage` | Saves the user's settings (on/off, pause, sites and checks switched off), hashed "not sensitive" values and a local history of detection types on the device. |
 | `alarms` | Clears the toolbar "OFF" badge when a one-hour pause ends. |
 | `activeTab` | When the user opens the popup, reads which supported AI site the current tab is on, so they can switch Preflight off for that site. |
-| `scripting` | Injects the PDF and Word text readers, which are bundled in the extension, into the AI chat page only when the user attaches such a file, instead of loading them on every page. |
+| `scripting` | Injects the PDF and Word text readers, which are bundled in the extension, into the AI chat page only when the user attaches such a file, instead of loading them on every page. After an install or update, also loads the extension's own content script into ChatGPT and Claude tabs that were already open, so they are protected without a reload. |
 | Host permissions (`chatgpt.com`, `chat.openai.com`, `claude.ai`) | Runs the check on the message and attachments when the user presses send on these AI chat sites. The extension runs on no other sites. |
 
 **Remote code:** No, I am not using remote code. (All JavaScript, including
@@ -137,3 +138,17 @@ No account or login is needed.
 4. Click "Replace with Safe Data" to swap the values for placeholders, or "Send Anyway".
 Click the toolbar icon to pause Preflight, switch it off for the site, or choose which checks run.
 ```
+
+## Updates
+
+1. Raise `version` in `extension/manifest.json` and run `node scripts/build.mjs`.
+2. Developer dashboard → Preflight.ai → **Package** → **Upload new package** → `dist/preflight-ai-<version>.zip`.
+3. If the permissions or what the extension does changed, update **Privacy** and **Store listing** to match.
+4. **Submit for review.**
+
+### 1.0.1
+
+- Warns when an attachment can't be checked: scanned PDFs with no text layer, empty Word files, images and photos. Can be switched off under "What Preflight checks".
+- Detects current OpenAI key formats (`sk-proj-`, `sk-svcacct-`, `sk-admin-`).
+- Fixed: every readable PDF was flagged as a "Sensitive File Type" because its own file name was part of the checked text.
+- Fixed: after an install or update, ChatGPT and Claude tabs that were already open now get the new version straight away. Before, the old copy kept running there and its catches weren't counted.

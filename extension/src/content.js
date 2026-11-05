@@ -19,6 +19,29 @@
   const SITE = detectAiPlatform(location.hostname);
   let lastInputSource = "text_field";
 
+  // After an update or reinstall, Chrome leaves the old copy of this script
+  // running in tabs that were already open, cut off from the extension: it
+  // could still warn but nothing it did would be recorded. The background
+  // worker injects a fresh copy into those tabs; whichever copy is older (or
+  // has lost the extension) stands aside and lets the new one handle sends.
+  const TAKEOVER_EVENT = "preflight:takeover";
+  const instanceId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  let retired = false;
+  document.addEventListener(TAKEOVER_EVENT, (event) => {
+    if (event.detail !== instanceId) retired = true;
+  });
+  document.dispatchEvent(new CustomEvent(TAKEOVER_EVENT, { detail: instanceId }));
+  function isRetired() {
+    if (!retired) {
+      try {
+        retired = !chrome.runtime || !chrome.runtime.id;
+      } catch (err) {
+        retired = true;
+      }
+    }
+    return retired;
+  }
+
   // Verbose logging into the host page's console is off by default. To turn
   // it on, run localStorage.setItem("preflightDebug", "1") on the page.
   let debugEnabled = false;
@@ -104,7 +127,7 @@
   }
 
   function addAttachments(fileList) {
-    if (!fileList || fileList.length === 0) return;
+    if (!fileList || fileList.length === 0 || isRetired()) return;
     const seen = new Set(pendingAttachments.map(attachmentKey));
     Array.from(fileList).forEach((file) => {
       const key = attachmentKey(file);
@@ -347,6 +370,7 @@
   // warning appeared.
   // ---------------------------------------------------------------------
   function handleSendAttempt(event, inputBox, sendButton) {
+    if (isRetired()) return; // a newer copy of Preflight handles this send
     // If we already approved this exact send, let it through natively.
     if (pendingSend && pendingSend.approved && pendingSend.text === getInputText(inputBox)) {
       // A button click may synchronously produce a form submit event. Keep
@@ -394,33 +418,53 @@
   // prompt text so Layer 1 regex + Layer 2 ML both cover attachment content.
   // Returns { scanText, attachmentCount } — never the attachment file names,
   // to keep the same "no raw content in logs" guarantee logEvent already has.
+  // unreadable lists attachments that couldn't be checked (scans, photos,
+  // files that failed to parse), so the user can be asked to check them.
   async function buildScanText(text, attachments) {
     if (!attachments || attachments.length === 0) {
-      return { scanText: text, attachmentCount: 0 };
+      return { scanText: text, attachmentCount: 0, unreadable: [] };
     }
     if (typeof window.PreflightFileScanner === "undefined") {
       console.warn("[Preflight] file scanner unavailable — scanning typed text only");
-      return { scanText: text, attachmentCount: attachments.length };
+      return { scanText: text, attachmentCount: attachments.length, unreadable: [] };
     }
     try {
-      const { combinedText } = await window.PreflightFileScanner.extractFilesText(attachments);
+      const { combinedText, files } = await window.PreflightFileScanner.extractFilesText(attachments);
       const scanText = combinedText ? `${text}\n\n${combinedText}` : text;
-      return { scanText, attachmentCount: attachments.length };
+      const unreadable = files.filter((file) => file.unreadable);
+      return { scanText, attachmentCount: attachments.length, unreadable };
     } catch (error) {
       console.error("[Preflight] attachment text extraction failed", error);
-      return { scanText: text, attachmentCount: attachments.length };
+      return { scanText: text, attachmentCount: attachments.length, unreadable: [] };
     }
+  }
+
+  const UNREADABLE_LABELS = {
+    scan: "Scanned document (no readable text)",
+    image: "Image or photo",
+    error: "File Preflight couldn't open",
+  };
+
+  async function unreadableFindings(files) {
+    if (files.length === 0 || !(await window.SentinelDetectors.isTypeEnabled("unreadable_file"))) return [];
+    return files.map((file) => ({
+      type: "unreadable_file",
+      label: UNREADABLE_LABELS[file.unreadable] || UNREADABLE_LABELS.error,
+      match: file.name,
+      detected: file.name,
+      riskLevel: "medium",
+    }));
   }
 
   async function runScanAndDecide(text, inputBox, sendButton, attachments) {
     const scanStartedAt = performance.now();
-    const { scanText, attachmentCount } = await buildScanText(text, attachments);
+    const { scanText, attachmentCount, unreadable } = await buildScanText(text, attachments);
 
     if (!pendingSend || pendingSend.text !== text) return;
 
     let findings;
     try {
-      findings = await window.SentinelDetectors.scan(scanText);
+      findings = [...await window.SentinelDetectors.scan(scanText), ...await unreadableFindings(unreadable)];
     } catch (error) {
       console.error("[Preflight] prompt scan failed", error);
       pendingSend = null;
@@ -644,7 +688,9 @@
     const riskLabel = RISK_LABELS[riskLevel] || "Low";
     const personalTypes = new Set(["aadhaar", "pan", "phone", "email", "bank_account"]);
     const credentialTypes = new Set(["openai_key", "anthropic_key", "aws_key", "jwt", "db_url", "private_key", "generic_secret", "hardcoded_password"]);
+    const isUnreadable = (finding) => finding.type === "unreadable_file";
     const countCategories = (list) => list.reduce((counts, finding) => {
+      if (isUnreadable(finding)) return counts;
       if (personalTypes.has(finding.type)) counts.personal += 1;
       else if (credentialTypes.has(finding.type)) counts.credentials += 1;
       else counts.business += 1;
@@ -652,7 +698,10 @@
     }, { personal: 0, credentials: 0, business: 0 });
     const categoryCounts = countCategories(findings);
     // Private keywords come from the company, so users can't dismiss them.
-    const canDismiss = (finding) => finding.type !== "company_keyword";
+    // Unreadable attachments are a file, not a value, so there is nothing to
+    // remember; they can be switched off in the popup instead.
+    const canDismiss = (finding) => finding.type !== "company_keyword" && !isUnreadable(finding);
+    const onlyUnreadable = findings.every(isUnreadable);
     const remaining = new Set(findings.keys());
 
     const overlay = document.createElement("div");
@@ -681,40 +730,47 @@
         <header class="sentinel-modal-header sentinel-risk-${riskLevel}">
           <span class="sentinel-header-icon">${icons.alert}</span>
           <div class="sentinel-header-copy">
-            <h2 id="sentinel-title">Sensitive Data Detected</h2>
+            <h2 id="sentinel-title">${onlyUnreadable ? (findings.length > 1 ? "Attachments Not Checked" : "Attachment Not Checked") : "Sensitive Data Detected"}</h2>
             <p>Review the details before proceeding.</p>
           </div>
           <button id="sentinel-close-btn" class="sentinel-close" type="button" aria-label="Close warning">${icons.close}</button>
         </header>
         <div class="sentinel-content">
           <div class="sentinel-overview">
-            <p id="sentinel-description">This prompt contains data that may expose sensitive personal or business information if sent to a public AI platform.</p>
+            <p id="sentinel-description">${onlyUnreadable
+              ? `Preflight can only check text, and ${findings.length > 1 ? "these attachments look like scans or photos. Open them" : "this attachment looks like a scan or photo. Open it"} and make sure there's no personal data, IDs or secrets before sending.`
+              : "This prompt contains data that may expose sensitive personal or business information if sent to a public AI platform."}</p>
             <div class="sentinel-risk-card">
               <span>Risk Level</span>
               <strong class="sentinel-risk-badge">${icons.shield}${riskLabel}</strong>
             </div>
           </div>
-          <div class="sentinel-summary" aria-label="Detected data categories">
+          <div class="sentinel-summary" aria-label="Detected data categories" ${onlyUnreadable ? "hidden" : ""}>
             ${categoryCard("personal", "Personal Information", categoryCounts.personal, icons.person)}
             ${categoryCard("credentials", "Credentials &amp; Secrets", categoryCounts.credentials, icons.lock)}
             ${categoryCard("business", "Business Data", categoryCounts.business, icons.building)}
           </div>
-          <button id="sentinel-details-btn" class="sentinel-details-toggle" type="button" aria-expanded="false" aria-controls="sentinel-details">
-            ${icons.chevron}<span>View Details</span>
+          <button id="sentinel-details-btn" class="sentinel-details-toggle" type="button" aria-expanded="${onlyUnreadable}" aria-controls="sentinel-details">
+            ${icons.chevron}<span>${onlyUnreadable ? "Hide Details" : "View Details"}</span>
           </button>
-          <div id="sentinel-details" class="sentinel-details" hidden>
+          <div id="sentinel-details" class="sentinel-details" ${onlyUnreadable ? "" : "hidden"}>
             ${findings.map((f, index) => `
               <section class="sentinel-detail-item" data-finding="${index}">
                 <span class="sentinel-detail-icon">${icons.id}</span>
                 <h3>${escapeHtml(f.label)}</h3>
+                ${isUnreadable(f) ? `
+                <div class="sentinel-detail-row"><span class="sentinel-detail-label">File:</span><code>${escapeHtml(f.detected)}</code></div>
+                <div class="sentinel-detail-row"><span class="sentinel-detail-label">Why:</span><span>Preflight can't read text in it. Check it yourself before sending.</span></div>` : `
                 <div class="sentinel-detail-row"><span class="sentinel-detail-label">Detected:</span><code>${escapeHtml(f.detected || f.match)}</code></div>
-                <div class="sentinel-detail-row"><span class="sentinel-detail-label">Replacement:</span><code class="sentinel-safe-value">${escapeHtml(window.SentinelDetectors.replacementFor(f.type))}</code></div>
+                <div class="sentinel-detail-row"><span class="sentinel-detail-label">Replacement:</span><code class="sentinel-safe-value">${escapeHtml(window.SentinelDetectors.replacementFor(f.type))}</code></div>`}
                 ${canDismiss(f) ? `<button class="sentinel-not-sensitive" type="button" data-dismiss="${index}">Not sensitive, don't warn again</button>` : ""}
               </section>`).join("")}
           </div>
-          <div class="sentinel-safety-note">${icons.shield}<span>Replacing will keep your prompt useful while protecting sensitive data.</span></div>
+          <div class="sentinel-safety-note">${icons.shield}<span>${onlyUnreadable
+            ? "To be safe, remove the file and send a text version, or blur the sensitive parts first."
+            : "Replacing will keep your prompt useful while protecting sensitive data."}</span></div>
           <div class="sentinel-buttons">
-            <button id="sentinel-sanitize-btn" class="sentinel-btn sentinel-btn-sanitize">${icons.shield}<span>Replace with Safe Data</span></button>
+            ${onlyUnreadable ? "" : `<button id="sentinel-sanitize-btn" class="sentinel-btn sentinel-btn-sanitize">${icons.shield}<span>Replace with Safe Data</span></button>`}
             <button id="sentinel-proceed-btn" class="sentinel-btn sentinel-btn-proceed">${icons.send}<span>Send Anyway</span></button>
           </div>
           ${findings.some(canDismiss) ? '<button id="sentinel-dismiss-all-btn" class="sentinel-not-sensitive sentinel-dismiss-all" type="button">Not sensitive? Send and don\'t warn me about these again</button>' : ""}
@@ -739,7 +795,7 @@
       if (event.key === "Escape") closeOverlay();
     });
     document.getElementById("sentinel-close-btn").focus();
-    document.getElementById("sentinel-sanitize-btn").addEventListener("click", async () => {
+    document.getElementById("sentinel-sanitize-btn")?.addEventListener("click", async () => {
       const buttons = overlay.querySelectorAll("button");
       buttons.forEach((button) => { button.disabled = true; });
       try {
@@ -871,6 +927,7 @@
   let composerMissingSince = 0;
 
   function checkHealth() {
+    if (isRetired()) return;
     let status = "unknown";
     if (PreflightProtection.isActive(protection, location.hostname) && CHAT_PATHS[SITE].test(location.pathname)) {
       if ([...document.querySelectorAll(sel.inputBox)].some(isVisible)) {

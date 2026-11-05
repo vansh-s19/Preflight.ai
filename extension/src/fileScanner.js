@@ -14,6 +14,11 @@
  */
 (function () {
   const SUPPORTED_EXTENSIONS = ["pdf", "docx", "txt"];
+  // Photos and screenshots: there is no text to read, so the user is asked
+  // to check them instead (no on-device OCR yet).
+  const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif", "heic", "heif", "bmp", "tif", "tiff"];
+  // A PDF with less text than this (a page number, a stamp) is a scan.
+  const MIN_READABLE_CHARS = 20;
   const PARSER_GLOBALS = { pdf: "pdfjsLib", docx: "mammoth" };
   const parserLoads = {};
 
@@ -84,30 +89,44 @@
     const ext = extensionOf(file.name);
     try {
       await loadParser(ext);
-      if (ext === "pdf") return { name: file.name, text: await extractPdfText(file) };
-      if (ext === "docx") return { name: file.name, text: await extractDocxText(file) };
+      if (ext === "pdf" || ext === "docx") {
+        const text = ext === "pdf" ? await extractPdfText(file) : await extractDocxText(file);
+        // A Word file is only a "scan" if it has no text at all; a short one
+        // can still be real text, like a single PAN number.
+        const chars = text.replace(/\s+/g, "").length;
+        const readable = ext === "pdf" ? chars >= MIN_READABLE_CHARS : chars > 0;
+        return { name: file.name, text, unreadable: readable ? undefined : "scan" };
+      }
       if (ext === "txt") return { name: file.name, text: await extractTxtText(file) };
+      if (IMAGE_EXTENSIONS.includes(ext) || /^image\//.test(file.type || "")) {
+        return { name: file.name, text: "", unreadable: "image" };
+      }
       return { name: file.name, text: "", unsupported: true };
     } catch (error) {
       console.warn("[Preflight] failed to extract text from attachment", file.name, error);
-      return { name: file.name, text: "", error: true };
+      return { name: file.name, text: "", error: true, unreadable: "error" };
     }
   }
 
   // Returns { combinedText, files } where files reports per-attachment
-  // status (name/unsupported/error) WITHOUT including its extracted text —
+  // status (name/unsupported/error/unreadable) WITHOUT its extracted text.
+  // unreadable is "scan" (PDF/Word with no text layer), "image" or "error":
+  // the file could not be checked, so the user should look at it themselves.
+  // Callers must not log file names or content, only aggregate counts —
   // callers must not log file names or content, only aggregate counts.
   async function extractFilesText(files) {
     const results = await Promise.all(Array.from(files || []).map(extractOne));
     const combinedText = results
       .filter((r) => r.text && r.text.trim().length > 0)
-      .map((r) => `--- Attachment: ${r.name} ---\n${r.text}`)
+      // No file name here: the text is scanned, and a name like
+      // "report.pdf" would itself be flagged as a sensitive file type.
+      .map((r, index) => `--- Attachment ${index + 1} ---\n${r.text}`)
       .join("\n\n");
     return {
       combinedText,
-      files: results.map(({ name, unsupported, error }) => ({ name, unsupported, error })),
+      files: results.map(({ name, unsupported, error, unreadable }) => ({ name, unsupported, error, unreadable })),
     };
   }
 
-  window.PreflightFileScanner = { extractFilesText, preload, SUPPORTED_EXTENSIONS };
+  window.PreflightFileScanner = { extractFilesText, preload, SUPPORTED_EXTENSIONS, IMAGE_EXTENSIONS };
 })();

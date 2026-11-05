@@ -49,6 +49,8 @@ function popupPage() {
   let html = readFileSync(join(extSrc, "popup.html"), "utf8");
   html = html.replace(/<script src="([^"]+)"><\/script>/g, (_, file) => `<script src="${pathToFileURL(join(extSrc, file)).href}"></script>`);
   html = html.replace("<script ", `<script src="${pathToFileURL(join(srcDir, "chrome-stub.js")).href}"></script>\n  <script `);
+  // Images and fonts use paths relative to the popup.
+  html = html.replace("<head>", `<head>\n  <base href="${pathToFileURL(extSrc).href}/" />`);
   const page = join(work, "popup.html");
   writeFileSync(page, html);
   return page;

@@ -185,7 +185,8 @@
 .sentinel-chevron { width: 17px; height: 17px; transition: transform 160ms ease; }
 .sentinel-details-toggle[aria-expanded="true"] .sentinel-chevron { transform: rotate(180deg); }
 
-.sentinel-details[hidden] { display: none; }
+.sentinel-details[hidden],
+.sentinel-summary[hidden] { display: none; }
 .sentinel-details {
   max-height: 260px;
   overflow-y: auto;
