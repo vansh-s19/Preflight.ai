@@ -35,6 +35,9 @@ Sample text: `My PAN is ABCDE1234F, call me on +91 9876543210`
 - [ ] A DOCX containing the sample warns on send.
 - [ ] A TXT containing the sample warns on send.
 - [ ] A clean PDF sends without a warning.
+- [ ] A scanned PDF (a photo of a page, no text layer) shows "Attachment Not Checked" with its file name; Send Anyway sends it.
+- [ ] A JPG or PNG photo shows "Attachment Not Checked".
+- [ ] What Preflight checks → untick **Scans and Photos Preflight Can't Read**: the scan sends with no warning.
 
 ## Popup
 
@@ -51,6 +54,10 @@ Sample text: `My PAN is ABCDE1234F, call me on +91 9876543210`
 - [ ] On a normal chat page there is no **!** badge after 15 seconds.
 - [ ] In DevTools, delete the message box element: within ~15 seconds the tab shows a red **!** and the popup explains it. Reload clears it.
 - [ ] Settings pages (chatgpt.com/#settings, claude.ai/settings) never show **!**.
+
+## Updates and open tabs
+
+- [ ] With a ChatGPT tab open, remove and reinstall the extension (or load a new version) without reloading the tab: the sample still warns, only once, and the popup's counts go up.
 
 ## Uninstall
 

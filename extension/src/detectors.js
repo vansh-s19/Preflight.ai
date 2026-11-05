@@ -43,7 +43,9 @@
   // PATTERNS — secrets & credentials
   // ---------------------------------------------------------------------
 
-  const OPENAI_KEY_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g;
+  // Legacy sk-..., and current sk-proj-/sk-svcacct-/sk-admin- keys (which
+  // contain - and _). sk-ant- keys are Anthropic's, matched below.
+  const OPENAI_KEY_REGEX = /\bsk-(?!ant-)[A-Za-z0-9_-]{20,}/g;
   const ANTHROPIC_KEY_REGEX = /\bsk-ant-[A-Za-z0-9-]{20,}\b/g;
   const AWS_KEY_REGEX = /\bAKIA[0-9A-Z]{16}\b/g;
   const AWS_SECRET_REGEX = /\b(?:[A-Za-z0-9+/]{40})\b/g; // loose, paired with context check
@@ -145,6 +147,7 @@
     { type: "env_content", label: ".env / Configuration Value", group: "secrets" },
     { type: "file_reference", label: "Sensitive File Type", group: "files" },
     { type: "source_code", label: "Source Code Pasted as Text", group: "files" },
+    { type: "unreadable_file", label: "Scans and Photos Preflight Can't Read", group: "files" },
   ];
 
   // ---------------------------------------------------------------------
@@ -198,6 +201,16 @@
       kept.push(finding);
     }
     return kept;
+  }
+
+  // Whether a check is switched on in the popup (for findings made outside
+  // scan(), such as attachments Preflight couldn't read).
+  async function isTypeEnabled(type) {
+    try {
+      return !(await getDetectorPrefs()).disabledTypes.includes(type);
+    } catch (err) {
+      return true;
+    }
   }
 
   // "Not sensitive, don't warn again" in the warning overlay.
@@ -491,5 +504,5 @@
     return "none";
   }
 
-  window.SentinelDetectors = { scan, sanitize, replacementFor, highestRisk, ignoreFindings, DETECTOR_TYPES, PREFS_KEY };
+  window.SentinelDetectors = { scan, sanitize, replacementFor, highestRisk, ignoreFindings, isTypeEnabled, DETECTOR_TYPES, PREFS_KEY };
 })();

@@ -7,8 +7,10 @@
  *   { enabled: true, pausedUntil: <epoch ms or 0>, disabledSites: ["claude.ai"] }
  */
 
-// eslint-disable-next-line no-unused-vars
-const PreflightProtection = (() => {
+// var, not const: after an update this file is injected again into tabs
+// that were already open, and redeclaring a const would throw.
+// eslint-disable-next-line no-unused-vars, no-var
+var PreflightProtection = (() => {
   const KEY = "protection";
 
   function normalize(value) {

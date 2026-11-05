@@ -98,6 +98,21 @@ async function expectType(text, type) {
     "Pay to account number [SYNTHETIC_BANK_ACCOUNT] today"
   );
 
+  // Current OpenAI key formats contain - and _; Anthropic keys stay separate.
+  await expectType("my key sk-proj-Ab3dEf6hIj9kLm2nOp5qRs8tUv1w_Xy4zAb7cDe0fGh", "openai_key");
+  await expectType("sk-svcacct-Zq8yWv7uTs6rQp5oNm4lKj3iHg2fEd1c", "openai_key");
+  await expectType("legacy sk-Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z", "openai_key");
+  const proj = "sk-proj-Ab3dEf6hIj9kLm2nOp5qRs8tUv1w_Xy4zAb7cDe0fGh";
+  assert.equal(await window.SentinelDetectors.sanitize(`key: ${proj}.`), "key: [REDACTED_OPENAI_KEY].", "the whole key is replaced");
+  const antTypes = (await window.SentinelDetectors.scan("sk-ant-api03-Zx9yWv8uTs7rQp6oNm5lKj4iHg3fEd2cBa1")).map((f) => f.type);
+  assert.deepEqual(antTypes, ["anthropic_key"], "Anthropic keys are not also reported as OpenAI keys");
+
+  // Unreadable attachments can be switched off like any other check.
+  assert.equal(await window.SentinelDetectors.isTypeEnabled("unreadable_file"), true);
+  storage.detectorPrefs = { disabledTypes: ["unreadable_file"] };
+  assert.equal(await window.SentinelDetectors.isTypeEnabled("unreadable_file"), false);
+  delete storage.detectorPrefs;
+
   // User filters: switched-off detector types and "not sensitive" values.
   {
     const text = "PAN ABCDE1234F, mail me at a@b.co";

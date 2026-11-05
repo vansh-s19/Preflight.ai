@@ -341,7 +341,33 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // ---------------------------------------------------------------------
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") chrome.tabs.create({ url: chrome.runtime.getURL("src/welcome.html") });
+  if (reason === "install" || reason === "update") injectIntoOpenTabs();
 });
+
+// Chrome only adds content scripts to pages loaded after an install or
+// update, so AI chat tabs that were already open would go unprotected (or
+// keep a cut-off old copy) until reloaded. Load the scripts into them now;
+// content.js retires any old copy it finds.
+async function injectIntoOpenTabs() {
+  for (const script of chrome.runtime.getManifest().content_scripts || []) {
+    let tabs = [];
+    try {
+      tabs = await chrome.tabs.query({ url: script.matches });
+    } catch (err) {
+      continue;
+    }
+    for (const tab of tabs) {
+      if (tab.discarded) continue; // loads the manifest scripts when reopened
+      const target = { tabId: tab.id, allFrames: Boolean(script.all_frames) };
+      try {
+        if (script.css && script.css.length) await chrome.scripting.insertCSS({ target, files: script.css });
+        await chrome.scripting.executeScript({ target, files: script.js });
+      } catch (err) {
+        // The tab may be loading, crashed or closed; it gets the scripts on its next load.
+      }
+    }
+  }
+}
 if (PREFLIGHT_CONFIG.WEBSITE_URL) chrome.runtime.setUninstallURL(`${PREFLIGHT_CONFIG.WEBSITE_URL}uninstall.html`);
 
 // ---------------------------------------------------------------------

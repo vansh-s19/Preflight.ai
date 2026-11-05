@@ -23,6 +23,16 @@ function loadScanner({ failFirst = false } = {}) {
         if (message.parser === "docx") {
           context.mammoth = { extractRawText: async () => ({ value: "PAN ABCDE1234F" }) };
         }
+        if (message.parser === "pdf") {
+          // A scan: one page whose only text is a page number.
+          context.pdfjsLib = {
+            GlobalWorkerOptions: { workerSrc: "pdf.worker.js" },
+            getDocument: () => ({ promise: Promise.resolve({
+              numPages: 1,
+              getPage: async () => ({ getTextContent: async () => ({ items: [{ str: "1" }] }) }),
+            }) }),
+          };
+        }
         setTimeout(() => callback({ success: true }), 0);
       },
     },
@@ -57,6 +67,27 @@ const file = (name, text = "") => ({
     const second = await scanner.extractFilesText([file("a.docx")]);
     assert.match(second.combinedText, /ABCDE1234F/, "the next attachment retries the load");
     assert.deepEqual(requests, ["docx", "docx"]);
+  }
+
+  {
+    const { scanner } = loadScanner();
+    const result = await scanner.extractFilesText([
+      file("Scanned Document 5.pdf"),
+      { ...file("pan-card.jpg"), type: "image/jpeg" },
+      { ...file("clipboard"), type: "image/png" },
+      file("notes.txt", "hello"),
+      file("archive.zip"),
+    ]);
+    const status = Object.fromEntries(result.files.map((f) => [f.name, f.unreadable || (f.unsupported ? "unsupported" : "read")]));
+    assert.deepEqual(status, {
+      "Scanned Document 5.pdf": "scan",
+      "pan-card.jpg": "image",
+      clipboard: "image",
+      "notes.txt": "read",
+      "archive.zip": "unsupported",
+    }, "scans and images are reported as unreadable");
+    assert(!/pan-card|clipboard/.test(result.combinedText), "images add no text");
+    assert(!/notes\.txt/.test(result.combinedText), "file names stay out of the scanned text");
   }
 
   console.log("fileScanner: all tests passed");

@@ -17,12 +17,15 @@ function loadBackground(apiBaseUrl) {
   const tabRemovedListeners = [];
   const injected = [];
   const installedListeners = [];
-  const lifecycle = { uninstallUrl: null, openedTabs: [] };
+  const lifecycle = { uninstallUrl: null, openedTabs: [], css: [] };
 
   const chrome = {
     runtime: {
       id: "test-extension",
-      getManifest: () => ({ version: "1.0.0" }),
+      getManifest: () => ({
+        version: "1.0.0",
+        content_scripts: [{ matches: ["https://chatgpt.com/*", "https://claude.ai/*"], js: ["src/content.js"], css: ["src/warning.css"] }],
+      }),
       onMessage: { addListener: (fn) => { onMessage = fn; } },
       onInstalled: { addListener: (fn) => { installedListeners.push(fn); } },
       setUninstallURL: (url) => { lifecycle.uninstallUrl = url; },
@@ -55,10 +58,12 @@ function loadBackground(apiBaseUrl) {
     },
     scripting: {
       executeScript: async (options) => { injected.push(options); },
+      insertCSS: async (options) => { lifecycle.css.push(options.target.tabId); },
     },
     tabs: {
       onRemoved: { addListener: (fn) => { tabRemovedListeners.push(fn); } },
       create: ({ url }) => { lifecycle.openedTabs.push(url); },
+      query: async ({ url }) => (url.includes("https://chatgpt.com/*") ? [{ id: 7 }, { id: 8, discarded: true }] : []),
     },
     alarms: {
       get: async () => null,
@@ -238,6 +243,15 @@ const scanEvent = {
     assert.deepEqual(bg.lifecycle.openedTabs, [], "updates don't reopen the welcome page");
     bg.installedListeners.forEach((fn) => fn({ reason: "install" }));
     assert.deepEqual(bg.lifecycle.openedTabs, ["chrome-extension://test-extension/src/welcome.html"]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Already-open AI tabs get the content scripts (update and install), but
+    // discarded tabs are left to load them when reopened.
+    assert.deepEqual(bg.injected.map((options) => options.target.tabId), [7, 7]);
+    assert.deepEqual(bg.injected[0].files, ["src/content.js"]);
+    assert.deepEqual(bg.lifecycle.css, [7, 7]);
+    bg.installedListeners.forEach((fn) => fn({ reason: "chrome_update" }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(bg.injected.length, 2, "a Chrome update doesn't reinject");
   }
 
   console.log("background: all tests passed");
