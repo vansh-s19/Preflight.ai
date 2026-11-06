@@ -39,26 +39,29 @@ Warns you before personal data, passwords, API keys or confidential info is sent
 
 **Description:**
 
+Keep it plain: no lists of brand names or technical terms. Version 1.0.1 was
+rejected as "keyword spam" for listing "OpenAI, Anthropic, AWS, JWTs, private
+keys, database connection strings, passwords and .env values".
+
 ```
-Pasted a PAN number, a customer's phone number or an API key into ChatGPT by mistake? Preflight.ai catches it before it's sent.
+Pasted an ID number, a customer's phone number or a password into an AI chat by mistake? Preflight.ai catches it before it's sent.
 
-When you press send on ChatGPT or Claude, Preflight checks your message and any attached PDF, Word or text files. If it finds sensitive data, it pauses the send and shows you exactly what it found. You choose what happens next:
+When you press send on ChatGPT or Claude, Preflight checks your message and any attached PDF, Word or text files. If it finds sensitive data, it pauses the send and shows you what it found. You choose what happens next:
 
-• Replace with safe data: sensitive values become clear placeholders like [SYNTHETIC_PAN], so the AI can still help.
+• Replace with safe data: sensitive values become clear placeholders, so the AI can still help.
 • Send anyway: it's your call, and Preflight never blocks you.
 • Go back and edit.
 
 WHAT IT CATCHES
-• Indian IDs and financial details: Aadhaar, PAN, GSTIN, bank account numbers, IFSC codes
+• Indian ID and bank details
 • Phone numbers and email addresses
-• API keys and secrets: OpenAI, Anthropic, AWS, JWTs, private keys, database connection strings, passwords and .env values
-• Sensitive file types and source code pasted as text
-• Scans and photos it can't read: it asks you to check them yourself
+• Passwords, API keys and other secrets
+• Scanned documents and photos it can't read: it asks you to check them yourself
 
 PRIVATE BY DESIGN
 • Every check runs inside your browser. The free version makes no network requests: nothing you type is sent to us or anyone else.
 • No account, no sign-up, no analytics, no ads.
-• It only runs on chatgpt.com, chat.openai.com and claude.ai.
+• It only runs on ChatGPT and Claude.
 • Its local history records what type of data was caught and when, never the text.
 
 YOU STAY IN CONTROL
@@ -67,7 +70,7 @@ YOU STAY IN CONTROL
 • Mark a value "Not sensitive" and it won't warn you about it again.
 
 FOR TEAMS
-Preflight Enterprise adds private keyword lists for code names and clients, an admin dashboard with full history and exports, and AI checks for contracts and financial documents.
+Preflight Enterprise adds private keyword lists, an admin dashboard with full history and exports, and AI checks for business documents.
 
 Preflight is a safety net, not a guarantee. It catches the common mistakes, so still take a look before you paste.
 ```
