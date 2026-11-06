@@ -19,7 +19,7 @@ Everything needed to fill in the Chrome Web Store developer dashboard for the
 
 | Field | Value |
 |---|---|
-| Package | `dist/preflight-ai-<version>.zip` (currently 1.0.1) |
+| Package | `dist/preflight-ai-<version>.zip` (currently 1.0.2) |
 | Visibility | Public |
 | Regions | All regions |
 | Pricing | Free |
@@ -155,3 +155,7 @@ Click the toolbar icon to pause Preflight, switch it off for the site, or choose
 - Detects current OpenAI key formats (`sk-proj-`, `sk-svcacct-`, `sk-admin-`).
 - Fixed: every readable PDF was flagged as a "Sensitive File Type" because its own file name was part of the checked text.
 - Fixed: after an install or update, ChatGPT and Claude tabs that were already open now get the new version straight away. Before, the old copy kept running there and its catches weren't counted.
+
+### 1.0.2
+
+- Welcome page redesigned to match preflightai.in (same look as the 1.0.1 popup).
