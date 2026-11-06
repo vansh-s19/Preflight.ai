@@ -6,164 +6,308 @@
   <title>Welcome to Preflight.ai</title>
   <link rel="icon" type="image/png" href="../icons/icon32.png" />
   <style>
+    /* Matches preflightai.in: warm off-white with a soft sky/mint wash and
+       dot grid, serif headings, pill buttons, tinted icon tiles. */
+    @font-face {
+      font-family: "Libertinus Serif";
+      font-weight: 600;
+      font-display: block;
+      src: url("fonts/libertinus-serif-600-latin.woff2") format("woff2");
+    }
+
     :root {
       color-scheme: light;
-      --ink: #172033;
-      --muted: #647084;
-      --line: #d9dee8;
-      --panel: #ffffff;
-      --surface: #f5f7fb;
-      --accent: #0f766e;
-      --accent-tint: #e6f4f1;
-      --info: #2563eb;
+      --ink: #0f172a;
+      --ink-soft: #334155;
+      --muted: #64748b;
+      --line: #e5e7eb;
+      --bg: #fbfbf9;
+      --card: #ffffff;
+      --soft: #f4f5f2;
+      --green: #16a34a;
+      --green-bright: #22c55e;
+      --green-tint: #e7f6ec;
+      --green-ink: #166534;
+      --amber: #d97706;
+      --amber-tint: #fdf2e0;
+      --blue: #2563eb;
+      --blue-tint: #e8effd;
+      --tint-sky: #e6effa;
+      --tint-peach: #fbeadf;
+      --tint-mint: #e3f4ea;
+      --display: "Libertinus Serif", Georgia, "Times New Roman", serif;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --radius: 20px;
+      --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+      --shadow: 0 1px 2px rgb(15 23 42 / 0.05), 0 16px 40px -18px rgb(15 23 42 / 0.22);
     }
 
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
 
     body {
       margin: 0;
-      background: var(--surface);
+      min-height: 100vh;
+      background:
+        radial-gradient(60% 45% at 0% 0%, var(--tint-sky) 0%, rgb(230 239 250 / 0) 70%),
+        radial-gradient(50% 40% at 100% 8%, var(--tint-mint) 0%, rgb(227 244 234 / 0) 70%),
+        var(--bg);
       color: var(--ink);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: var(--sans);
       font-size: 15px;
-      line-height: 1.5;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
     }
-
-    main {
-      width: min(760px, 100% - 32px);
-      margin: 0 auto;
-      padding: 56px 0 64px;
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-image: radial-gradient(rgb(15 23 42 / 0.07) 1px, transparent 1.2px);
+      background-size: 22px 22px;
+      mask-image: linear-gradient(180deg, #000 0%, transparent 55%);
     }
 
     h1, h2, h3, p { margin: 0; }
+    .brand-name, h1, h2 { font-variant-ligatures: no-common-ligatures; }
+    a { color: inherit; }
 
-    .hero { display: flex; align-items: center; gap: 18px; }
-    .hero img { width: 64px; height: 64px; flex: none; }
-    h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; }
-    .lead { margin-top: 6px; color: var(--muted); font-size: 16px; }
+    .page { width: min(880px, 100% - 40px); margin: 0 auto; padding: 28px 0 56px; }
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 32px;
-    }
-
-    .card, .panel {
-      background: var(--panel);
+    /* ---------- Top bar ---------- */
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+    .brand img { width: 32px; height: 32px; filter: drop-shadow(0 2px 4px rgb(251 1 2 / 0.25)); }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px 8px 10px;
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 18px;
+      border-radius: 14px;
+      background: var(--card);
+      box-shadow: var(--shadow-sm);
+      font-size: 13px;
+    }
+    .chip strong { display: block; font-size: 13px; line-height: 1.2; }
+    .chip span { color: var(--muted); font-size: 12px; }
+    .live { width: 9px; height: 9px; border-radius: 50%; background: var(--green-bright); box-shadow: 0 0 0 4px rgb(34 197 94 / 0.18); }
+
+    /* ---------- Hero ---------- */
+    .hero { padding: 56px 0 36px; }
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(38px, 5.4vw, 56px);
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -0.015em;
+    }
+    .lead { max-width: 560px; margin-top: 14px; color: var(--ink-soft); font-size: 17px; }
+
+    .steps { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 22px 0 0; padding: 0; list-style: none; color: var(--ink-soft); font-size: 14.5px; font-weight: 500; }
+    .steps li { display: inline-flex; align-items: center; gap: 8px; }
+    .steps .arrow { color: #94a3b8; }
+    .dot { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; }
+    .dot svg { width: 15px; height: 15px; }
+    .dot-blue { background: var(--blue-tint); color: var(--blue); }
+    .dot-amber { background: var(--amber-tint); color: var(--amber); }
+    .dot-green { background: var(--green-tint); color: var(--green); }
+
+    /* ---------- Cards ---------- */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
     }
 
-    .card h2 { font-size: 15px; margin-bottom: 6px; }
-    .card p { color: var(--muted); font-size: 14px; }
+    .try { padding: 28px; box-shadow: var(--shadow); }
+    .try h2, .pin h2 { font-family: var(--display); font-size: 28px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+    .try > p { margin-top: 6px; color: var(--muted); }
 
-    .panel { margin-top: 12px; display: grid; gap: 12px; }
-    .panel h2 { font-size: 17px; }
-    .panel p { color: var(--muted); }
+    .try-steps { display: grid; gap: 14px; margin: 22px 0 0; padding: 0; list-style: none; counter-reset: step; }
+    .try-steps > li { display: grid; grid-template-columns: 28px 1fr; gap: 14px; align-items: start; counter-increment: step; }
+    .try-steps > li::before {
+      content: counter(step);
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .try-steps h3 { padding-top: 3px; font-size: 15px; font-weight: 600; }
 
     .sample {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      background: var(--surface);
-      border: 1px dashed var(--line);
+      gap: 12px;
+      margin-top: 10px;
+      padding: 10px 10px 10px 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--soft);
     }
-    .sample code { flex: 1; font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+    .sample code { flex: 1; font: 14px/1.45 var(--mono); color: var(--ink); overflow-wrap: anywhere; }
 
-    .row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
 
-    button, .button {
+    .btn {
       display: inline-flex;
       align-items: center;
-      min-height: 38px;
-      padding: 0 16px;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 20px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 999px;
       background: #fff;
       color: var(--ink);
       font: inherit;
-      font-weight: 650;
+      font-size: 14.5px;
+      font-weight: 600;
       text-decoration: none;
+      white-space: nowrap;
       cursor: pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
     }
-    button:hover, .button:hover { border-color: #aab4c5; }
-    .button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .button.primary:hover { background: #0b5f59; }
-    button:focus-visible, .button:focus-visible, a:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.3); outline-offset: 2px; }
+    .btn:hover { transform: translateY(-1px); border-color: #cbd5e1; }
+    .btn-dark { border-color: var(--ink); background: var(--ink); color: #fff; box-shadow: 0 8px 20px -8px rgb(15 23 42 / 0.5); }
+    .btn-dark:hover { background: #1e293b; }
+    .btn-small { min-height: 36px; padding: 0 16px; font-size: 13.5px; }
+    .btn.is-done { border-color: var(--green-tint); background: var(--green-tint); color: var(--green-ink); }
+    .btn:focus-visible, a:focus-visible { outline: 3px solid rgb(34 197 94 / 0.45); outline-offset: 3px; }
 
-    ol { margin: 0; padding-left: 20px; color: var(--muted); display: grid; gap: 4px; }
+    .features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+    .feature { padding: 22px; }
+    .tile { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 14px; border-radius: 12px; }
+    .tile svg { width: 20px; height: 20px; }
+    .tile-sky { background: var(--tint-sky); color: var(--blue); }
+    .tile-mint { background: var(--tint-mint); color: var(--green); }
+    .tile-peach { background: var(--tint-peach); color: #c2410c; }
+    .feature h3 { font-size: 15.5px; font-weight: 650; margin-bottom: 6px; }
+    .feature p { color: var(--muted); font-size: 14px; }
 
-    .note {
-      margin-top: 24px;
-      color: var(--muted);
-      font-size: 13px;
+    .pin { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; margin-top: 14px; padding: 24px 28px; }
+    .pin h2 { font-size: 22px; }
+    .pin ol { margin: 10px 0 0; padding-left: 20px; color: var(--ink-soft); display: grid; gap: 4px; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--soft);
     }
-    .note a { color: var(--info); }
+    .toolbar .slot { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--muted); }
+    .toolbar .slot svg { width: 18px; height: 18px; }
+    .toolbar .slot.on { background: #fff; box-shadow: var(--shadow-sm); }
+    .toolbar img { width: 20px; height: 20px; }
 
-    @media (max-width: 640px) {
-      main { padding-top: 32px; }
-      .cards { grid-template-columns: 1fr; }
-      .hero { align-items: flex-start; }
-      h1 { font-size: 24px; }
+    .note { margin-top: 26px; color: var(--muted); font-size: 13px; text-align: center; }
+    .note a { color: var(--ink-soft); text-underline-offset: 2px; }
+
+    @media (max-width: 720px) {
+      .hero { padding-top: 40px; }
+      .features { grid-template-columns: 1fr; }
+      .pin { grid-template-columns: 1fr; }
+      .chip span { display: none; }
+      .try { padding: 22px; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <section class="hero">
-      <img src="../icons/icon128.png" alt="" />
-      <div>
-        <h1>Preflight.ai is on</h1>
-        <p class="lead">It checks what you're about to send to ChatGPT and Claude, and warns you before personal data or secrets go out.</p>
+  <div class="page">
+    <header class="top">
+      <span class="brand"><img src="../icons/icon128.png" alt="" /><span class="brand-name">Preflight</span></span>
+      <div class="chip" role="status">
+        <span class="live" aria-hidden="true"></span>
+        <div><strong>Preflight is on</strong><span>Watching ChatGPT and Claude</span></div>
       </div>
+    </header>
+
+    <section class="hero">
+      <h1>You're all set.<br />Catch leaks before you hit send.</h1>
+      <p class="lead">Preflight checks what you're about to send to ChatGPT and Claude, and warns you before personal data or secrets go out.</p>
+      <ul class="steps" aria-label="How it works">
+        <li><span class="dot dot-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2"/></svg></span>Spots sensitive data</li>
+        <li class="arrow" aria-hidden="true">→</li>
+        <li><span class="dot dot-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4M12 17h.01"/></svg></span>Warns you</li>
+        <li class="arrow" aria-hidden="true">→</li>
+        <li><span class="dot dot-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Swaps in safe data</li>
+      </ul>
     </section>
 
-    <section class="cards" aria-label="How Preflight works">
-      <div class="card">
-        <h2>What it checks</h2>
-        <p>Aadhaar, PAN, GSTIN and bank details, phone numbers and emails, API keys, passwords, and PDF, Word and text attachments.</p>
+    <section class="card try" aria-labelledby="try-title">
+      <h2 id="try-title">Try it in 30 seconds</h2>
+      <p>The example below is made up. Preflight will stop it before it leaves.</p>
+      <ol class="try-steps">
+        <li>
+          <div>
+            <h3>Copy this message</h3>
+            <div class="sample">
+              <code id="sample-text">My PAN is ABCDE1234F, call me on +91 9876543210</code>
+              <button id="copy-btn" class="btn btn-small" type="button">Copy</button>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Open a chat and paste it</h3>
+            <div class="row">
+              <a class="btn btn-dark" href="https://chatgpt.com/" target="_blank" rel="noopener">Open ChatGPT</a>
+              <a class="btn" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude</a>
+            </div>
+          </div>
+        </li>
+        <li><h3>Press send and watch Preflight step in</h3></li>
+      </ol>
+    </section>
+
+    <section class="features" aria-label="What to expect">
+      <div class="card feature">
+        <span class="tile tile-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.8 16c.5-1.4 1.4-2 2.7-2s2.2.6 2.7 2M14 10h4.5M14 14h3.5"/></svg></span>
+        <h3>What it checks</h3>
+        <p>Indian ID and bank details, phone numbers and emails, passwords and API keys, plus PDF, Word and text attachments.</p>
       </div>
-      <div class="card">
-        <h2>Stays on your device</h2>
+      <div class="card feature">
+        <span class="tile tile-mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21.5s7.5-3.8 7.5-9.5V5.2L12 2.5 4.5 5.2V12c0 5.7 7.5 9.5 7.5 9.5Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg></span>
+        <h3>Stays on your device</h3>
         <p>Every check runs in your browser. Nothing you type is sent to Preflight or anyone else.</p>
       </div>
-      <div class="card">
-        <h2>You decide</h2>
-        <p>A warning never blocks you. Replace the data with safe placeholders, send anyway, or go back and edit.</p>
+      <div class="card feature">
+        <span class="tile tile-peach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 9.5 17 19 7.5"/></svg></span>
+        <h3>You decide</h3>
+        <p>A warning never blocks you. Swap in safe placeholders, send anyway, or go back and edit.</p>
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="try-title">
-      <h2 id="try-title">Try it</h2>
-      <p>Copy this made-up example, paste it into a chat and press send. Preflight will stop it before it leaves.</p>
-      <div class="sample">
-        <code id="sample-text">My PAN is ABCDE1234F, call me on +91 9876543210</code>
-        <button id="copy-btn" type="button">Copy</button>
+    <section class="card pin" aria-labelledby="pin-title">
+      <div>
+        <h2 id="pin-title">Pin it to your toolbar</h2>
+        <ol>
+          <li>Click the puzzle-piece icon at the top right of Chrome.</li>
+          <li>Click the pin next to Preflight.ai.</li>
+          <li>Click the Preflight icon to pause it, switch it off for a site, or choose what it checks.</li>
+        </ol>
       </div>
-      <div class="row">
-        <a class="button primary" href="https://chatgpt.com/" target="_blank" rel="noopener">Open ChatGPT</a>
-        <a class="button" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude</a>
+      <div class="toolbar" aria-hidden="true">
+        <span class="slot on"><img src="../icons/icon48.png" alt="" /></span>
+        <span class="slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4h3.5a2 2 0 1 1 3 0H19v4.5a2 2 0 1 0 0 3V16h-3.5a2 2 0 1 0-3 0H9v-3.5a2 2 0 1 1 0-3Z"/></svg></span>
+        <span class="slot"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="18.5" r="1.6"/></svg></span>
       </div>
-    </section>
-
-    <section class="panel" aria-labelledby="pin-title">
-      <h2 id="pin-title">Keep it in reach</h2>
-      <ol>
-        <li>Click the puzzle-piece icon at the top right of Chrome.</li>
-        <li>Click the pin next to Preflight.ai.</li>
-        <li>Click the Preflight icon any time to pause it, turn it off for a site, or choose what it checks.</li>
-      </ol>
     </section>
 
     <p class="note">
       Preflight is a safety net, not a guarantee. It catches the common mistakes, so still take a look before you paste.
       <a id="privacy-link" href="#" target="_blank" rel="noopener" hidden>Privacy policy</a>
     </p>
-  </main>
+  </div>
 
   <script src="config.js"></script>
   <script src="welcome.js"></script>

@@ -11,8 +11,12 @@ document.getElementById("copy-btn").addEventListener("click", async (event) => {
   try {
     await navigator.clipboard.writeText(document.getElementById("sample-text").textContent);
     button.textContent = "Copied";
+    button.classList.add("is-done");
   } catch (err) {
     button.textContent = "Select and copy";
   }
-  setTimeout(() => { button.textContent = "Copy"; }, 2000);
+  setTimeout(() => {
+    button.textContent = "Copy";
+    button.classList.remove("is-done");
+  }, 2000);
 });
