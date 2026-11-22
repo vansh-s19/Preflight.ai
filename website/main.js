@@ -56,6 +56,14 @@
     update();
   }
 
+  // Phones show the whole laptop at desktop size, scaled to the hero's width.
+  const visual = document.querySelector(".hero-visual");
+  const laptop = visual && visual.querySelector(".laptop");
+  if (laptop) {
+    const fit = () => laptop.style.setProperty("--laptop-scale", String(visual.clientWidth / laptop.offsetWidth));
+    new ResizeObserver(fit).observe(visual);
+  }
+
   document.querySelectorAll("[data-year]").forEach((node) => {
     node.textContent = String(new Date().getFullYear());
   });
