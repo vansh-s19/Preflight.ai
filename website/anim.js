@@ -27,7 +27,9 @@ window.PreflightDemo = (function () {
     function pointAt(target, dx = 0, dy = 0) {
       const box = stage.getBoundingClientRect();
       const r = target.getBoundingClientRect();
-      return { x: r.left - box.left + r.width / 2 + dx, y: r.top - box.top + r.height / 2 + dy };
+      // On phones the stage is scaled down; convert screen pixels back to its own.
+      const scale = box.width / stage.offsetWidth || 1;
+      return { x: (r.left - box.left + r.width / 2) / scale + dx, y: (r.top - box.top + r.height / 2) / scale + dy };
     }
 
     function place({ x, y }, instant = false) {
