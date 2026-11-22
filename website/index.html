@@ -29,6 +29,7 @@
     <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M5 10h11v4.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V10Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 11.5h1.5a2.5 2.5 0 0 1 0 5H16" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 3.5c-.6.8.6 1.7 0 2.5M12 3.5c-.6.8.6 1.7 0 2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
     <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 20a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
@@ -464,10 +465,16 @@
               <li><svg aria-hidden="true"><use href="#i-check" /></svg>Pause it, turn it off per site, choose what it checks</li>
               <li><svg aria-hidden="true"><use href="#i-check" /></svg>A weekly count of what it caught</li>
             </ul>
-            <a class="btn btn-dark" data-install href="#">
-              <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
-              <span data-install-label>Add to Chrome</span>
-            </a>
+            <div class="plan-actions">
+              <a class="btn btn-dark" data-install href="#">
+                <svg class="btn-icon" aria-hidden="true"><use href="#i-plus" /></svg>
+                <span data-install-label>Add to Chrome</span>
+              </a>
+              <a class="btn btn-light btn-coffee" data-support data-support-link href="#" target="_blank" rel="noopener" hidden>
+                <svg class="btn-icon" aria-hidden="true"><use href="#i-coffee" /></svg>
+                Buy me a coffee
+              </a>
+            </div>
           </article>
 
           <article class="plan plan-team">
@@ -569,6 +576,10 @@
         <a href="privacy.html">Privacy policy</a>
         <a href="#faq">FAQ</a>
         <a data-contact href="#">Contact</a>
+        <a class="btn btn-light btn-small btn-coffee" data-support data-support-link href="#" target="_blank" rel="noopener" hidden>
+          <svg class="btn-icon" aria-hidden="true"><use href="#i-coffee" /></svg>
+          Buy me a coffee
+        </a>
       </nav>
       <p class="footer-legal">© <span data-year>2026</span> Preflight.ai · Built by Vansh Saxena. ChatGPT is a trademark of OpenAI and Claude is a trademark of Anthropic. Preflight is not affiliated with either.</p>
     </div>

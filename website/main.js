@@ -1,6 +1,11 @@
 (function () {
   const site = window.PREFLIGHT_SITE || {};
 
+  if (site.supportUrl) {
+    document.querySelectorAll("[data-support-link]").forEach((link) => { link.href = site.supportUrl; });
+    document.querySelectorAll("[data-support]").forEach((el) => { el.hidden = false; });
+  }
+
   document.querySelectorAll("[data-install]").forEach((link) => {
     if (site.chromeWebStoreUrl) {
       link.href = site.chromeWebStoreUrl;
